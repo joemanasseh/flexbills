@@ -12,16 +12,12 @@ import '../../views/dashboard/btm_screens/profile_screen.dart';
 
 final log = logger(DashboardController);
 
-class DashboardController extends GetxController with DownloadFile{
-
+class DashboardController extends GetxController with DownloadFile {
   @override
   void onInit() {
     checkPermission();
     super.onInit();
   }
-
-
-
 
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -41,23 +37,19 @@ class DashboardController extends GetxController with DownloadFile{
     Strings.profile
   ];
 
+  void notificationRoute() => Get.toNamed(Routes.notificationScreen);
 
-  void notificationRoute()=> Get.toNamed(Routes.notificationScreen);
-
-  void addNewEscrowRoute()=> Get.toNamed(Routes.addNewEscrowScreen);
+  void addNewEscrowRoute() => Get.toNamed(Routes.addNewEscrowScreen);
 
   final _isLoading = false.obs;
   bool get isLoading => _isLoading.value;
 
-
-
-  logOutProcess() async{
-
+  logOutProcess() async {
     _isLoading.value = true;
     update();
 
     await ApiServices.logOutApi().then((value) {
-      if(value != null) {
+      if (value != null) {
         LocalStorage.logout();
         Get.offAllNamed(Routes.loginScreen);
       }
@@ -68,6 +60,5 @@ class DashboardController extends GetxController with DownloadFile{
 
     _isLoading.value = false;
     update();
-
   }
 }

@@ -1,8 +1,10 @@
+import 'package:flutter/material.dart';
 import 'package:adescrow_app/routes/routes.dart';
 import 'package:adescrow_app/views/auth/fa_verify_screen/fa_verify_screen.dart';
 import 'package:get/get.dart';
 
 import '../backend/backend_utils/network_check/no_internet_screen.dart';
+import '../bindings/add_money_screen_binding.dart';
 import '../bindings/add_new_escrow_screen_binding.dart';
 import '../bindings/buyer_payment_screen_binding.dart';
 import '../bindings/conversation_binding.dart';
@@ -11,6 +13,8 @@ import '../bindings/dashboard_screen_binding.dart';
 import '../bindings/email_verify_screen_binding.dart';
 import '../bindings/forgot_otp_screen_binding.dart';
 import '../bindings/login_screen_binding.dart';
+import '../bindings/money_exchange_screen_binding.dart';
+import '../bindings/money_out_screen_binding.dart';
 import '../bindings/onboard_screen_binding.dart';
 import '../bindings/register_screen_binding.dart';
 import '../bindings/splash_screen_binding.dart';
@@ -46,7 +50,6 @@ import '../views/dashboard/profiles_screens/change_pass_screen/change_pass_scree
 import '../views/dashboard/profiles_screens/fa_security_screen/fa_security_screen.dart';
 import '../views/dashboard/profiles_screens/update_profile_screen/update_profile_screen.dart';
 
-
 class RoutePageList {
   static var list = [
     GetPage(
@@ -71,7 +74,7 @@ class RoutePageList {
       page: () => WelcomeScreen(),
       binding: WelcomeBinding(),
     ),
-    
+
     GetPage(
       name: Routes.loginScreen,
       page: () => const LoginScreen(),
@@ -82,10 +85,9 @@ class RoutePageList {
       page: () => const FAVerifyScreen(),
     ),
     GetPage(
-      name: Routes.forgotOTPScreen,
-      page: () => const ForgotPasswordOTPScreen(),
-      binding: ForgotOTPBinding()
-    ),
+        name: Routes.forgotOTPScreen,
+        page: () => const ForgotPasswordOTPScreen(),
+        binding: ForgotOTPBinding()),
     GetPage(
       name: Routes.resetPassScreen,
       page: () => const ResetPassScreen(),
@@ -97,17 +99,13 @@ class RoutePageList {
       binding: RegisterBinding(),
     ),
     GetPage(
-      name: Routes.registerOTPScreen,
-      page: () => const RegisterOTPScreen(),
-      binding: EmailVerifyBinding()
-    ),
+        name: Routes.registerOTPScreen,
+        page: () => const RegisterOTPScreen(),
+        binding: EmailVerifyBinding()),
     GetPage(
       name: Routes.kycFormScreen,
       page: () => KYCFormScreen(),
-      // binding: KYCBinding()
     ),
-
-
 
     GetPage(
       name: Routes.dashboardScreen,
@@ -119,16 +117,28 @@ class RoutePageList {
       page: () => const NotificationScreen(),
     ),
 
+    // Bills Screen - Placeholder
     GetPage(
-      name: Routes.conversationScreen,
-      page: () => ConversationScreen(),
-      binding: ConversationBinding()
+      name: Routes.billsScreen,
+      page: () => Scaffold(
+        appBar: AppBar(title: const Text('Bills')),
+        body: const Center(
+          child: Text(
+            'Bills Feature Coming Soon',
+            style: TextStyle(fontSize: 18),
+          ),
+        ),
+      ),
     ),
+
     GetPage(
-      name: Routes.addNewEscrowScreen,
-      page: () => const AddNewEscrowScreen(),
-      binding: AddNewEscrowBinding()
-    ),
+        name: Routes.conversationScreen,
+        page: () => ConversationScreen(),
+        binding: ConversationBinding()),
+    GetPage(
+        name: Routes.addNewEscrowScreen,
+        page: () => const AddNewEscrowScreen(),
+        binding: AddNewEscrowBinding()),
     GetPage(
       name: Routes.addNewEscrowPreviewScreen,
       page: () => const AddNewEscrowPreviewScreen(),
@@ -138,15 +148,13 @@ class RoutePageList {
       page: () => EscrowManualScreen(),
     ),
     GetPage(
-      name: Routes.buyerPaymentScreen,
-      page: () => const BuyerPaymentScreen(),
-      binding: BuyerPaymentBinding()
-    ),
+        name: Routes.buyerPaymentScreen,
+        page: () => const BuyerPaymentScreen(),
+        binding: BuyerPaymentBinding()),
     GetPage(
       name: Routes.buyerPaymentManualScreen,
       page: () => BuyerPaymentManualScreen(),
     ),
-
 
     GetPage(
       name: Routes.currentBalanceScreen,
@@ -157,6 +165,7 @@ class RoutePageList {
     GetPage(
       name: Routes.addMoneyScreen,
       page: () => const AddMoneyScreen(),
+      binding: AddMoneyBinding(),
     ),
     GetPage(
       name: Routes.addMoneyManualScreen,
@@ -170,6 +179,7 @@ class RoutePageList {
     GetPage(
       name: Routes.moneyOutScreen,
       page: () => const MoneyOutScreen(),
+      binding: MoneyOutBinding(),
     ),
     GetPage(
       name: Routes.moneyOutScreenPreview,
@@ -183,6 +193,7 @@ class RoutePageList {
     GetPage(
       name: Routes.moneyExchangeScreen,
       page: () => const MoneyExchangeScreen(),
+      binding: MoneyExchangeBinding(),
     ),
     GetPage(
       name: Routes.moneyExchangeScreenPreview,
@@ -206,9 +217,5 @@ class RoutePageList {
       name: Routes.faSecurityScreen,
       page: () => const FASecurityScreen(),
     ),
-    // GetPage(
-    //   name: Routes.updateKYCScreen,
-    //   page: () => const UpdateKYCFormScreen(),
-    // ),
   ];
 }
