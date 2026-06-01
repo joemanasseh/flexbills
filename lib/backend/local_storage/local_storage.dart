@@ -1,8 +1,14 @@
 import 'package:flutter/widgets.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 
 import '../backend_utils/constants.dart';
+
+const _secureStorage = FlutterSecureStorage(
+  aOptions: AndroidOptions(encryptedSharedPreferences: true),
+  iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
+);
 
 const String tokenKey = "tokenKey";
 const String emailKey = "emailKey";
@@ -23,9 +29,17 @@ class LocalStorage {
   }
 
   static Future<void> saveToken({required String token}) async {
-    final box = GetStorage();
+    // Write to secure storage (Keychain/Keystore) AND session cache
+    await _secureStorage.write(key: tokenKey, value: token);
+    await GetStorage().write(tokenKey, token);
+  }
 
-    await box.write(tokenKey, token);
+  /// Call once at app startup to restore the token from Keychain into the session cache.
+  static Future<void> restoreTokenFromSecureStorage() async {
+    final token = await _secureStorage.read(key: tokenKey);
+    if (token != null) {
+      await GetStorage().write(tokenKey, token);
+    }
   }
 
   static Future<void> isLoginSuccess({required bool isLoggedIn}) async {
@@ -57,11 +71,12 @@ class LocalStorage {
   }
 
   static String? getToken() {
-    var rtrn = GetStorage().read(tokenKey);
+    // Synchronous read from in-memory cache (populated after saveToken)
+    return GetStorage().read(tokenKey);
+  }
 
-    debugPrint(rtrn == null ? "##Token is null###" : "");
-
-    return rtrn;
+  static Future<String?> getTokenAsync() async {
+    return await _secureStorage.read(key: tokenKey);
   }
 
   static bool isLoggedIn() {
@@ -81,6 +96,7 @@ class LocalStorage {
     await box.remove(emailKey);
     await box.remove(isLoggedInKey);
     await box.remove(tokenKey);
+    await _secureStorage.delete(key: tokenKey);
   }
 
 

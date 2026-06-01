@@ -55,15 +55,17 @@ class RegisterOTPController extends GetxController {
 
     await ApiServices.emailVerificationApi(body: inputBody).then((value) {
       if (value != null) {
-        if(Get.find<RegisterController>().registrationModel.data.user.kycVerified == 0) {
+        final registerController = Get.find<RegisterController>();
+        final model = registerController.registrationModel;
+        if (model.data.user.kycVerified == 0) {
           Get.toNamed(Routes.kycFormScreen);
-        }else{
+        } else {
           Get.offAllNamed(Routes.dashboardScreen);
         }
       }
       update();
     }).catchError((onError) {
-      log.e(onError);
+      log.e('OTP Verification Error: $onError');
     });
 
     _isLoading.value = false;

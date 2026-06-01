@@ -52,6 +52,46 @@ class _WalletDropDownState<T extends DropdownModel>
     return _dropDown();
   }
 
+  Widget _avatarWidget(BuildContext context,
+      {required String imageUrl, required String fallbackLetter}) {
+    final double r = Dimensions.iconSizeDefault * .85;
+    final double size = r * 2;
+    if (imageUrl.isEmpty) {
+      return CircleAvatar(
+        backgroundColor: CustomColor.whiteColor,
+        radius: r,
+        child: Text(
+          fallbackLetter.toUpperCase(),
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: Theme.of(context).primaryColor,
+          ),
+        ),
+      );
+    }
+    return CircleAvatar(
+      backgroundColor: CustomColor.whiteColor,
+      radius: r,
+      child: ClipOval(
+        child: Image.network(
+          imageUrl,
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => Text(
+            fallbackLetter.toUpperCase(),
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: Theme.of(context).primaryColor,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   _dropDown() {
     return Container(
       height: Dimensions.inputBoxHeight * 0.7,
@@ -82,21 +122,11 @@ class _WalletDropDownState<T extends DropdownModel>
             children: [
               Animate(
                 effects: const [FadeEffect(), ScaleEffect()],
-                child: widget.image.isEmpty
-                    ? CircleAvatar(
-                  backgroundColor: CustomColor.whiteColor,
-                  radius: Dimensions.iconSizeDefault * .85,
-                  child: TitleHeading2Widget(
-                    text: widget.hint[0],
-                    fontSize: 24,
-                    color: Theme.of(context).primaryColor,
-                  ),
-                ).paddingZero
-                    : CircleAvatar(
-                  backgroundColor: CustomColor.whiteColor,
-                  radius: Dimensions.iconSizeDefault * .85,
-                  backgroundImage: NetworkImage(widget.image),
-                ).paddingZero,
+                child: _avatarWidget(
+                  context,
+                  imageUrl: widget.image,
+                  fallbackLetter: widget.hint.isNotEmpty ? widget.hint[0] : '?',
+                ),
               ).paddingZero,
               horizontalSpace(Dimensions.marginSizeHorizontal * .3),
               Text(
@@ -156,20 +186,10 @@ class _WalletDropDownState<T extends DropdownModel>
                     children: [
                       Animate(
                         effects: const [FadeEffect(), ScaleEffect()],
-                        child: value.img.isEmpty
-                            ? CircleAvatar(
-                          backgroundColor: CustomColor.whiteColor,
-                          radius: Dimensions.iconSizeDefault * .85,
-                          child: TitleHeading2Widget(
-                            text: value.title[0],
-                            fontSize: 24,
-                            color: Theme.of(context).primaryColor,
-                          ),
-                        ).paddingZero
-                            :  CircleAvatar(
-                          backgroundColor: CustomColor.whiteColor,
-                          radius: Dimensions.iconSizeDefault * .85,
-                          backgroundImage: NetworkImage(value.img),
+                        child: _avatarWidget(
+                          context,
+                          imageUrl: value.img,
+                          fallbackLetter: value.title.isNotEmpty ? value.title[0] : '?',
                         ),
                       ),
                       horizontalSpace(Dimensions.marginSizeHorizontal * .4),

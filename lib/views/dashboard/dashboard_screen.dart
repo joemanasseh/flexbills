@@ -98,30 +98,15 @@ class DashboardScreen extends GetView<DashboardController> {
                     ),
                     Visibility(
                       visible: controller.selectedIndex.value == 1,
-                      child: IconButton(
-                        onPressed: controller.addNewEscrowRoute,
-                        icon: Animate(
-                          effects: const [FadeEffect(), ScaleEffect()],
-                          child: Container(
-                              decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Theme.of(context).primaryColor),
-                              child: const Icon(Icons.add,
-                                  color: CustomColor.whiteColor)),
-                        ),
-                      ),
+                      child: SizedBox(width: Dimensions.widthSize * 4),
                     ),
                     Visibility(
                       visible: controller.selectedIndex.value == 2,
-                      child: SizedBox(
-                        width: Dimensions.widthSize * 4,
-                      ),
+                      child: SizedBox(width: Dimensions.widthSize * 4),
                     ),
                     Visibility(
                       visible: controller.selectedIndex.value == 3,
-                      child: const ChangeLanguageWidget(
-                        isOnboard: true,
-                      ),
+                      child: const ChangeLanguageWidget(isOnboard: true),
                     ),
                   ],
                 ),
@@ -135,13 +120,15 @@ class DashboardScreen extends GetView<DashboardController> {
   }
 
   _bottomNavWidget(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final navBg = isDark ? const Color(0xFF141921) : CustomColor.whiteColor;
     return Container(
       height: Dimensions.buttonHeight * .8,
       decoration: BoxDecoration(
-          color: CustomColor.whiteColor,
+          color: navBg,
           boxShadow: [
             BoxShadow(
-                color: CustomColor.blackColor.withOpacity(.1),
+                color: CustomColor.blackColor.withOpacity(isDark ? .3 : .1),
                 offset: const Offset(0, -4),
                 blurRadius: 10,
                 spreadRadius: -4,
@@ -166,16 +153,16 @@ class DashboardScreen extends GetView<DashboardController> {
                 onTap: () {
                   controller.selectedIndex.value = 1;
                 },
-                icon: Icons.bar_chart,
-                text: Strings.myEscrow,
+                icon: Icons.account_balance_wallet_outlined,
+                text: Strings.myWallet,
                 isSelected: controller.selectedIndex.value == 1,
               ),
               NavButtonWidget(
                 onTap: () {
                   controller.selectedIndex.value = 2;
                 },
-                icon: Icons.account_balance_wallet_outlined,
-                text: Strings.myWallet,
+                icon: Icons.receipt_long_rounded,
+                text: Strings.bills,
                 isSelected: controller.selectedIndex.value == 2,
               ),
               NavButtonWidget(

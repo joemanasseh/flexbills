@@ -2,6 +2,7 @@ import 'package:adescrow_app/utils/basic_screen_imports.dart';
 import 'package:adescrow_app/utils/responsive_layout.dart';
 import 'package:adescrow_app/widgets/others/custom_loading_widget.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../controller/before_auth/basic_settings_controller.dart';
 import '../../../widgets/others/custom_cached_network_image.dart';
@@ -27,13 +28,18 @@ class SplashScreen extends StatelessWidget {
                     left: 0,
                     child: Animate(
                       effects: const [FadeEffect(), ScaleEffect()],
-                      child: TitleHeading1Widget(
-                        text: Strings.appName,
+                      child: Text(
+                        'Flexbills',
                         textAlign: TextAlign.center,
-                        color: Theme.of(context).primaryColor,
+                        style: GoogleFonts.inter(
+                          fontSize: 32,
+                          fontWeight: FontWeight.w800,
+                          color: Theme.of(context).primaryColor,
+                          letterSpacing: -0.5,
+                        ),
                       ),
                     ),
-                  )
+                  ),
                 ],
               )),
       ),

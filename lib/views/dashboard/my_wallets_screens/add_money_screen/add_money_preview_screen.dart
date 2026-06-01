@@ -16,6 +16,7 @@ class AddMoneyPreviewScreen extends GetView<AddMoneyController> {
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             appBar: const PrimaryAppBar(
               title: Strings.preview,
+              breadcrumbs: ['Home', 'Wallet', 'Add Money', 'Preview'],
             ),
             body: Obx(() => controller.isLoading
                 ? const CustomLoadingWidget()

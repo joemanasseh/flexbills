@@ -1,6 +1,5 @@
 
 import '../../backend/models/dashboard/notification_model.dart';
-import '../../extensions/custom_extensions.dart';
 import '../../utils/basic_widget_imports.dart';
 import '../text_labels/title_heading5_widget.dart';
 

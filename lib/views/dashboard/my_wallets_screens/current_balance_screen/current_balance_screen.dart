@@ -6,7 +6,6 @@ import '../../../../backend/backend_utils/no_data_widget.dart';
 import '../../../../backend/models/dashboard/home_model.dart';
 import '../../../../controller/dashboard/btm_navs_controller/home_controller.dart';
 import '../../../../controller/dashboard/my_wallets/current_balance_controller.dart';
-import '../../../../extensions/custom_extensions.dart';
 import '../../../../routes/routes.dart';
 import '../../../../widgets/buttons/circle_icon_button_widget.dart';
 import '../../../../widgets/list_tile/transaction_tile_widget.dart';
@@ -38,6 +37,7 @@ class CurrentBalanceScreen extends GetView<CurrentBalanceController> {
                   backgroundColor: Colors.transparent,
                   appBar: const PrimaryAppBar(
                     title: Strings.currentBalance,
+                    breadcrumbs: ['Home', 'Wallet', 'Balance'],
                   ),
                   body: ListView(
                     physics: const BouncingScrollPhysics(),
@@ -129,6 +129,8 @@ class CurrentBalanceScreen extends GetView<CurrentBalanceController> {
   }
 
   _recentTransactionsWidget() {
+    final transactions =
+        Get.find<HomeController>().homeModel?.data.transactions ?? [];
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: Dimensions.paddingSizeHorizontal * .85,
@@ -150,7 +152,7 @@ class CurrentBalanceScreen extends GetView<CurrentBalanceController> {
             fontSize: Dimensions.headingTextSize2 * .85,
           ),
           verticalSpace(Dimensions.marginSizeVertical * .5),
-          Get.find<HomeController>().homeModel.data.transactions.isEmpty
+          transactions.isEmpty
               ? const Column(
                   children: [
                     NoDataWidget(),
@@ -171,19 +173,12 @@ class CurrentBalanceScreen extends GetView<CurrentBalanceController> {
                       },
                       expansion: Get.find<HomeController>().openTileIndex.value == index,
                       inDashboard: true,
-                      transaction: Get.find<HomeController>()
-                          .homeModel
-                          .data
-                          .transactions[index],
+                      transaction: transactions[index],
                     ));
                   },
                   separatorBuilder: (context, i) =>
                       verticalSpace(Dimensions.marginSizeVertical * .3),
-                  itemCount: Get.find<HomeController>()
-                      .homeModel
-                      .data
-                      .transactions
-                      .length),
+                  itemCount: transactions.length),
         ],
       ),
     );

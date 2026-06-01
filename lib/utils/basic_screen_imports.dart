@@ -2,6 +2,7 @@ export 'package:flutter/material.dart';
 export 'package:flutter_screenutil/flutter_screenutil.dart';
 export 'package:get/get.dart';
 
+export '../../widgets/appbar/breadcrumb_bar.dart';
 export '../../widgets/appbar/primary_appbar.dart';
 export '../../widgets/buttons/primary_button.dart';
 export '../../widgets/inputs/primary_text_input_widget.dart';
@@ -14,3 +15,4 @@ export 'custom_color.dart';
 export 'custom_style.dart';
 export 'dimensions.dart';
 export 'size.dart';
+export '../extensions/custom_extensions.dart';

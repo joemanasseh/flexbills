@@ -95,6 +95,15 @@ class LanguageSettingController extends GetxController {
       value = selectedLang.translateKeyValues[key] ?? key;
     }
 
+    // Normalise legacy brand name from server translations
+    value = value
+        .replaceAll('Escroc App', 'Flexbills')
+        .replaceAll('Escroc', 'Flexbills')
+        .replaceAll('escroc', 'Flexbills')
+        .replaceAll('AdesEscrow', 'Flexbills')
+        .replaceAll('Adescrow', 'Flexbills')
+        .replaceAll('adescrow', 'Flexbills');
+
     return value;
   }
 

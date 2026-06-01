@@ -5,8 +5,8 @@ import '../../backend/download_file.dart';
 import '../../backend/local_storage/local_storage.dart';
 import '../../backend/services/api_services.dart';
 import '../../routes/routes.dart';
+import '../../views/dashboard/btm_screens/bills_screen.dart';
 import '../../views/dashboard/btm_screens/home_screen.dart';
-import '../../views/dashboard/btm_screens/my_escrow_screen.dart';
 import '../../views/dashboard/btm_screens/my_wallet_screen.dart';
 import '../../views/dashboard/btm_screens/profile_screen.dart';
 
@@ -25,21 +25,19 @@ class DashboardController extends GetxController with DownloadFile {
 
   List body = [
     const HomeScreen(),
-    const MyEscrowScreen(),
     const MyWalletScreen(),
-    const ProfileScreen()
+    const BillsScreen(),
+    const ProfileScreen(),
   ];
 
   List bodyText = [
     Strings.home,
-    Strings.myEscrow,
     Strings.myWallet,
-    Strings.profile
+    Strings.bills,
+    Strings.profile,
   ];
 
   void notificationRoute() => Get.toNamed(Routes.notificationScreen);
-
-  void addNewEscrowRoute() => Get.toNamed(Routes.addNewEscrowScreen);
 
   final _isLoading = false.obs;
   bool get isLoading => _isLoading.value;

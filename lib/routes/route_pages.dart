@@ -1,13 +1,11 @@
-import 'package:flutter/material.dart';
 import 'package:adescrow_app/routes/routes.dart';
 import 'package:adescrow_app/views/auth/fa_verify_screen/fa_verify_screen.dart';
 import 'package:get/get.dart';
 
+import '../middleware/auth_middleware.dart';
+
 import '../backend/backend_utils/network_check/no_internet_screen.dart';
 import '../bindings/add_money_screen_binding.dart';
-import '../bindings/add_new_escrow_screen_binding.dart';
-import '../bindings/buyer_payment_screen_binding.dart';
-import '../bindings/conversation_binding.dart';
 import '../bindings/current_balance_screen_binding.dart';
 import '../bindings/dashboard_screen_binding.dart';
 import '../bindings/email_verify_screen_binding.dart';
@@ -29,12 +27,6 @@ import '../views/before_auth/onboard_screen/onboard_screen.dart';
 import '../views/before_auth/splash_screen/splash_screen.dart';
 import '../views/before_auth/welcome_screen/welcome_screen.dart';
 import '../views/dashboard/dashboard_screen.dart';
-import '../views/dashboard/my_escrow_screens/add_new_escrow_preview_screen/add_new_escrow_preview_screen.dart';
-import '../views/dashboard/my_escrow_screens/add_new_escrow_screen/add_new_escrow_screen.dart';
-import '../views/dashboard/my_escrow_screens/buyer_payment_manual_screen/buyer_payment_manual_screen.dart';
-import '../views/dashboard/my_escrow_screens/buyer_payment_screen/buyer_payment_screen.dart';
-import '../views/dashboard/my_escrow_screens/conversation_screen/conversation_screen.dart';
-import '../views/dashboard/my_escrow_screens/escrow_manual_screen/escrow_manual_screen.dart';
 import '../views/dashboard/my_wallets_screens/add_money_screen/add_money_manual_screen.dart';
 import '../views/dashboard/my_wallets_screens/add_money_screen/add_money_preview_screen.dart';
 import '../views/dashboard/my_wallets_screens/add_money_screen/add_money_screen.dart';
@@ -44,7 +36,14 @@ import '../views/dashboard/my_wallets_screens/money_exchange_screen/money_exchan
 import '../views/dashboard/my_wallets_screens/money_out_screen/money_out_manual_screen.dart';
 import '../views/dashboard/my_wallets_screens/money_out_screen/money_out_preview_screen.dart';
 import '../views/dashboard/my_wallets_screens/money_out_screen/money_out_screen.dart';
+import '../views/dashboard/my_wallets_screens/money_out_screen/payout_pending_screen.dart';
 import '../views/dashboard/my_wallets_screens/transactions_screen/transactions_screen.dart';
+import '../views/dashboard/btm_screens/bills_screen.dart';
+import '../views/dashboard/bills_screens/bill_biller_screen.dart';
+import '../views/dashboard/bills_screens/bill_form_screen.dart';
+import '../views/dashboard/bills_screens/bill_preview_screen.dart';
+import '../views/dashboard/bills_screens/bill_status_screen.dart';
+import '../bindings/bills_screen_binding.dart';
 import '../views/dashboard/notification_screen/notification_screen.dart';
 import '../views/dashboard/profiles_screens/change_pass_screen/change_pass_screen.dart';
 import '../views/dashboard/profiles_screens/fa_security_screen/fa_security_screen.dart';
@@ -111,111 +110,119 @@ class RoutePageList {
       name: Routes.dashboardScreen,
       page: () => const DashboardScreen(),
       binding: DashboardBinding(),
+      middlewares: [AuthMiddleware()],
     ),
     GetPage(
       name: Routes.notificationScreen,
       page: () => const NotificationScreen(),
+      middlewares: [AuthMiddleware()],
     ),
 
-    // Bills Screen - Placeholder
     GetPage(
       name: Routes.billsScreen,
-      page: () => Scaffold(
-        appBar: AppBar(title: const Text('Bills')),
-        body: const Center(
-          child: Text(
-            'Bills Feature Coming Soon',
-            style: TextStyle(fontSize: 18),
-          ),
-        ),
-      ),
-    ),
-
-    GetPage(
-        name: Routes.conversationScreen,
-        page: () => ConversationScreen(),
-        binding: ConversationBinding()),
-    GetPage(
-        name: Routes.addNewEscrowScreen,
-        page: () => const AddNewEscrowScreen(),
-        binding: AddNewEscrowBinding()),
-    GetPage(
-      name: Routes.addNewEscrowPreviewScreen,
-      page: () => const AddNewEscrowPreviewScreen(),
+      page: () => const BillsScreen(),
+      binding: BillsBinding(),
+      middlewares: [AuthMiddleware()],
     ),
     GetPage(
-      name: Routes.escrowManualScreen,
-      page: () => EscrowManualScreen(),
+      name: Routes.billBillerScreen,
+      page: () => const BillBillerScreen(),
+      middlewares: [AuthMiddleware()],
     ),
     GetPage(
-        name: Routes.buyerPaymentScreen,
-        page: () => const BuyerPaymentScreen(),
-        binding: BuyerPaymentBinding()),
+      name: Routes.billFormScreen,
+      page: () => const BillFormScreen(),
+      middlewares: [AuthMiddleware()],
+    ),
     GetPage(
-      name: Routes.buyerPaymentManualScreen,
-      page: () => BuyerPaymentManualScreen(),
+      name: Routes.billPreviewScreen,
+      page: () => const BillPreviewScreen(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: Routes.billStatusScreen,
+      page: () => const BillStatusScreen(),
+      middlewares: [AuthMiddleware()],
     ),
 
     GetPage(
       name: Routes.currentBalanceScreen,
       page: () => CurrentBalanceScreen(),
       binding: CurrentBalanceBinding(),
+      middlewares: [AuthMiddleware()],
     ),
 
     GetPage(
       name: Routes.addMoneyScreen,
       page: () => const AddMoneyScreen(),
       binding: AddMoneyBinding(),
+      middlewares: [AuthMiddleware()],
     ),
     GetPage(
       name: Routes.addMoneyManualScreen,
       page: () => AddMoneyManualScreen(),
+      middlewares: [AuthMiddleware()],
     ),
     GetPage(
       name: Routes.addMoneyScreenPreview,
       page: () => const AddMoneyPreviewScreen(),
+      middlewares: [AuthMiddleware()],
     ),
 
     GetPage(
       name: Routes.moneyOutScreen,
       page: () => const MoneyOutScreen(),
       binding: MoneyOutBinding(),
+      middlewares: [AuthMiddleware()],
     ),
     GetPage(
       name: Routes.moneyOutScreenPreview,
       page: () => const MoneyOutPreviewScreen(),
+      middlewares: [AuthMiddleware()],
     ),
     GetPage(
       name: Routes.moneyOutManualScreen,
       page: () => MoneyOutManualScreen(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: Routes.payoutPendingScreen,
+      page: () => const PayoutPendingScreen(),
+      middlewares: [AuthMiddleware()],
     ),
 
     GetPage(
       name: Routes.moneyExchangeScreen,
       page: () => const MoneyExchangeScreen(),
       binding: MoneyExchangeBinding(),
+      middlewares: [AuthMiddleware()],
     ),
     GetPage(
       name: Routes.moneyExchangeScreenPreview,
       page: () => const MoneyExchangePreviewScreen(),
+      middlewares: [AuthMiddleware()],
     ),
 
     GetPage(
       name: Routes.transactionsScreen,
       page: () => const TransactionsScreen(),
+      middlewares: [AuthMiddleware()],
     ),
 
     GetPage(
       name: Routes.updateProfileScreen,
       page: () => const UpdateProfileScreen(),
+      middlewares: [AuthMiddleware()],
     ),
     GetPage(
       name: Routes.changePasswordScreen,
       page: () => const ChangePassScreen(),
+      middlewares: [AuthMiddleware()],
     ),
     GetPage(
       name: Routes.faSecurityScreen,
       page: () => const FASecurityScreen(),
+      middlewares: [AuthMiddleware()],
     ),
   ];
 }

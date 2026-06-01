@@ -1,12 +1,13 @@
-import 'package:adescrow_app/backend/services/api_endpoint.dart';
 import 'package:adescrow_app/utils/basic_screen_imports.dart';
+import 'package:adescrow_app/utils/currency_flag_util.dart';
 import 'package:adescrow_app/utils/responsive_layout.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../backend/models/dashboard/home_model.dart';
 import '../../../bindings/on_refresh.dart';
 import '../../../controller/dashboard/btm_navs_controller/my_wallet_controller.dart';
-import '../../../extensions/custom_extensions.dart';
 import '../../../widgets/others/custom_loading_widget.dart';
 
 class MyWalletScreen extends GetView<MyWalletController> {
@@ -14,197 +15,276 @@ class MyWalletScreen extends GetView<MyWalletController> {
 
   @override
   Widget build(BuildContext context) {
-    final height = MediaQuery.of(context).size.height;
-    final width = MediaQuery.of(context).size.width;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return ResponsiveLayout(
       mobileScaffold: Scaffold(
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          body: Obx(() => controller.walletsController.isLoading
-              ? const CustomLoadingWidget()
-              : RefreshIndicator(
-                  backgroundColor: Theme.of(context).primaryColor,
-                  color: CustomColor.whiteColor,
-                  onRefresh: onRefresh,
-                  child: ListView(
-                    physics: const BouncingScrollPhysics(),
-                    children: [
-                      Container(
-                        height: height * .85,
-                        width: width,
-                        padding: EdgeInsets.only(
-                          top: Dimensions.paddingSizeVertical * .8,
-                          left: Dimensions.paddingSizeHorizontal * .8,
-                          right: Dimensions.paddingSizeHorizontal * .8,
-                        ),
-                        decoration: BoxDecoration(
-                            color: CustomColor.whiteColor,
-                            borderRadius: BorderRadius.only(
-                              topLeft: Radius.circular(Dimensions.radius * 3),
-                              topRight: Radius.circular(Dimensions.radius * 3),
-                            )),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            TitleHeading2Widget(
-                              text: Strings.availableWallet,
-                              fontWeight: FontWeight.w600,
-                              fontSize: Dimensions.headingTextSize2 * .85,
-                            ),
-                            verticalSpace(Dimensions.marginSizeVertical * .5),
-                            Expanded(
-                                child: GridView.count(
-                              crossAxisSpacing:
-                                  Dimensions.paddingSizeHorizontal * .2,
-                              mainAxisSpacing:
-                                  Dimensions.paddingSizeVertical * .2,
-                              physics: const BouncingScrollPhysics(),
-                              padding: EdgeInsets.only(
-                                bottom: Dimensions.paddingSizeVertical * .8,
-                              ),
-                              crossAxisCount: 2,
-                              childAspectRatio: 2.65,
-                              scrollDirection: Axis.vertical,
-                              shrinkWrap: true,
-                              children: List.generate(
-                                  controller.walletsController.homeModel.data
-                                      .userWallet.length,
-                                  (index) => _gridViewWidget(context, index)),
-                            ))
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ))),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        body: Obx(() => controller.walletsController.isLoading
+            ? const CustomLoadingWidget()
+            : RefreshIndicator(
+                backgroundColor: Theme.of(context).primaryColor,
+                color: CustomColor.whiteColor,
+                onRefresh: onRefresh,
+                child: _buildBody(context, isDark),
+              )),
+      ),
     );
   }
 
-  _gridViewWidget(BuildContext context, int index) {
-    UserWallet data =
-        controller.walletsController.homeModel.data.userWallet[index];
-    return InkWell(
-      onTap: () {
-        controller.routeCurrentBalanceScreen(index, data);
-      },
-      child: Container(
-        // width: double.infinity,
-        padding: EdgeInsets.symmetric(
-            horizontal: Dimensions.paddingSizeHorizontal * .3,
-            vertical: Dimensions.paddingSizeVertical * .4),
-        decoration: BoxDecoration(
-            color: Theme.of(context).scaffoldBackgroundColor,
-            borderRadius: BorderRadius.circular(Dimensions.radius)),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Animate(
-              effects: const [FadeEffect(), ScaleEffect()],
-              child: Container(
-                // height: Dimensions.buttonHeight * .8,
-                width: Dimensions.widthSize * 3.1,
-                margin: EdgeInsets.symmetric(
-                    vertical: Dimensions.paddingSizeVertical * .18),
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(Dimensions.radius * 1),
-                    image: DecorationImage(
-                        image: NetworkImage(
-                          "${ApiEndpoint.mainDomain}/${data.imagePath}/${data.flag}",
-                        ),
-                        fit: BoxFit.fill)),
-              ),
+  static const _displayCurrencies = ['USD', 'EUR', 'GBP', 'CHF'];
+
+  Widget _buildBody(BuildContext context, bool isDark) {
+    final wallets = (controller.walletsController.homeModel?.data.userWallet ?? [])
+        .where((w) => _displayCurrencies.contains(w.currencyCode))
+        .toList();
+    final textColor = isDark
+        ? CustomColor.primaryDarkTextColor
+        : CustomColor.primaryLightTextColor;
+
+    return CustomScrollView(
+      physics: const BouncingScrollPhysics(
+          parent: AlwaysScrollableScrollPhysics()),
+      slivers: [
+        SliverToBoxAdapter(
+          child: _buildHeader(context, isDark, textColor, wallets.length),
+        ),
+        SliverPadding(
+          padding: EdgeInsets.symmetric(
+            horizontal: Dimensions.paddingSizeHorizontal,
+          ).copyWith(bottom: Dimensions.paddingSizeVertical * 2),
+          sliver: SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) => _buildWalletCard(
+                  context, wallets[index], isDark, textColor, index),
+              childCount: wallets.length,
             ),
-            horizontalSpace(Dimensions.marginSizeHorizontal * .3),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  TitleHeading2Widget(
-                    text: makeBalance(
-                        data.balance.toString(), data.currencyType == "FIAT" ? 2 : 6),
-                    fontSize: Dimensions.headingTextSize2 * .7,
-                  ),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    physics: const BouncingScrollPhysics(),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHeader(BuildContext context, bool isDark, Color textColor,
+      int walletCount) {
+    return Container(
+      padding: EdgeInsets.only(
+        top: Dimensions.paddingSizeVertical * 0.75,
+        left: Dimensions.paddingSizeHorizontal,
+        right: Dimensions.paddingSizeHorizontal,
+        bottom: Dimensions.paddingSizeVertical * 1.5,
+      ),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? [
+                  CustomColor.primaryDarkColor.withOpacity(0.15),
+                  CustomColor.secondaryDarkColor,
+                ]
+              : [
+                  CustomColor.primaryLightColor.withOpacity(0.08),
+                  Colors.white,
+                ],
+        ),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(Dimensions.radius * 3),
+          bottomRight: Radius.circular(Dimensions.radius * 3),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'My Wallets',
+            style: GoogleFonts.inter(
+              fontSize: Dimensions.headingTextSize1,
+              fontWeight: FontWeight.w800,
+              color: textColor,
+              letterSpacing: -0.5,
+            ),
+          ),
+          SizedBox(height: Dimensions.marginSizeVertical * 0.25),
+          Text(
+            '$walletCount ${walletCount == 1 ? 'wallet' : 'wallets'} available',
+            style: GoogleFonts.inter(
+              fontSize: Dimensions.headingTextSize5,
+              color: textColor.withOpacity(0.5),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWalletCard(BuildContext context, UserWallet data, bool isDark,
+      Color textColor, int index) {
+    final cardBg = isDark ? const Color(0xFF141921) : Colors.white;
+    final borderColor = isDark
+        ? Colors.white.withOpacity(0.07)
+        : Colors.grey.withOpacity(0.13);
+
+    return Animate(
+      effects: [
+        FadeEffect(delay: (index * 60).ms),
+        SlideEffect(
+            begin: const Offset(0, 0.08),
+            end: Offset.zero,
+            delay: (index * 60).ms),
+      ],
+      child: InkWell(
+        onTap: () => controller.routeCurrentBalanceScreen(data),
+        borderRadius: BorderRadius.circular(Dimensions.radius * 1.5),
+        child: Container(
+          margin:
+              EdgeInsets.only(bottom: Dimensions.marginSizeVertical * 0.6),
+          padding: EdgeInsets.symmetric(
+            horizontal: Dimensions.paddingSizeHorizontal * 0.75,
+            vertical: Dimensions.paddingSizeVertical * 0.65,
+          ),
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius:
+                BorderRadius.circular(Dimensions.radius * 1.5),
+            border: Border.all(color: borderColor),
+            boxShadow: isDark
+                ? null
+                : [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.04),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+          ),
+          child: Row(
+            children: [
+              _buildFlag(data, isDark),
+              SizedBox(width: Dimensions.marginSizeHorizontal * 0.6),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      data.name,
+                      style: GoogleFonts.inter(
+                        fontSize: Dimensions.headingTextSize5,
+                        color: textColor.withOpacity(0.55),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Row(
                       children: [
-                        TitleHeading4Widget(
-                          text: data.name,
-                          fontSize: Dimensions.headingTextSize4 * .7,
-                          opacity: .4,
+                        Text(
+                          data.currencyCode,
+                          style: GoogleFonts.inter(
+                            fontSize: Dimensions.headingTextSize4,
+                            fontWeight: FontWeight.w700,
+                            color: Theme.of(context).primaryColor,
+                          ),
                         ),
-                        TitleHeading4Widget(
-                          text: " - ",
-                          fontSize: Dimensions.headingTextSize4 * .5,
-                          opacity: .4,
-                        ),
-                        TitleHeading4Widget(
-                          text: data.currencyCode,
-                          fontSize: Dimensions.headingTextSize4 * .7,
-                          color: Theme.of(context).primaryColor,
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context)
+                                .primaryColor
+                                .withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            data.currencyType,
+                            style: GoogleFonts.inter(
+                              fontSize: Dimensions.headingTextSize6,
+                              fontWeight: FontWeight.w600,
+                              color: Theme.of(context).primaryColor,
+                            ),
+                          ),
                         ),
                       ],
                     ),
-                  )
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    makeBalance(
+                      data.balance.toString(),
+                      data.currencyType == 'FIAT' ? 2 : 6,
+                    ),
+                    style: GoogleFonts.inter(
+                      fontSize: Dimensions.headingTextSize3,
+                      fontWeight: FontWeight.w700,
+                      color: textColor,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    'Tap to manage',
+                    style: GoogleFonts.inter(
+                      fontSize: Dimensions.headingTextSize6,
+                      color: textColor.withOpacity(0.35),
+                    ),
+                  ),
                 ],
               ),
-            )
-          ],
+              const SizedBox(width: 4),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: textColor.withOpacity(0.3),
+                size: 18,
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  /*
-  Container(
-                      height: Dimensions.buttonHeight * 1.4,
-                      width: Dimensions.widthSize * 22,
-                      padding: EdgeInsets.all(Dimensions.paddingSize * .8),
-                      decoration: BoxDecoration(
-                          color: Theme.of(context).scaffoldBackgroundColor,
-                          borderRadius: BorderRadius.circular(Dimensions.radius)),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Image.asset(flag[index]["img"]),
-                          horizontalSpace(Dimensions.marginSizeHorizontal * .5),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              TitleHeading2Widget(
-                                text: flag[index]["value"],
-                                fontSize: Dimensions.headingTextSize2 * .85,
-                              ),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: [
-                                  TitleHeading4Widget(
-                                    text: flag[index]["name"],
-                                    fontSize: Dimensions.headingTextSize4 * .85,
-                                    opacity: .4,
-                                  ),
-                                  TitleHeading4Widget(
-                                    text: " - ",
-                                    fontSize: Dimensions.headingTextSize4 * .85,
-                                    opacity: .4,
-                                  ),
-                                  TitleHeading4Widget(
-                                    text: flag[index]["currency"],
-                                    fontSize: Dimensions.headingTextSize4 * .85,
-                                    color: Theme.of(context).primaryColor,
-                                  ),
-                                ],
-                              )
-                            ],
-                          )
-                        ],
-                      ),
-                    )
-   */
+  Widget _buildFlag(UserWallet data, bool isDark) {
+    final url = flagUrl(data.currencyCode);
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(5),
+      child: SizedBox(
+        width: 48,
+        height: 32,
+        child: CachedNetworkImage(
+          imageUrl: url,
+          fit: BoxFit.cover,
+          placeholder: (_, __) => Container(
+            color: isDark
+                ? Colors.white.withOpacity(0.05)
+                : Colors.grey.withOpacity(0.12),
+            child: Icon(
+              Icons.flag_rounded,
+              size: 18,
+              color: Theme.of(Get.context!).primaryColor.withOpacity(0.4),
+            ),
+          ),
+          errorWidget: (_, __, ___) => Container(
+            color: isDark
+                ? Colors.white.withOpacity(0.05)
+                : Colors.grey.withOpacity(0.12),
+            child: Center(
+              child: Text(
+                data.currencyCode.isNotEmpty
+                    ? data.currencyCode.substring(0, 1)
+                    : '?',
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                  color: Theme.of(Get.context!).primaryColor,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

@@ -1,14 +1,12 @@
-import 'package:adescrow_app/backend/backend_utils/custom_snackbar.dart';
 import 'package:adescrow_app/utils/basic_screen_imports.dart';
 import 'package:adescrow_app/utils/responsive_layout.dart';
 import 'package:adescrow_app/widgets/others/custom_loading_widget.dart';
-import 'package:adescrow_app/widgets/text_labels/title_heading5_widget.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../backend/models/money_exchange/money_exchange_index_model.dart';
 import '../../../../controller/dashboard/my_wallets/money_exchange_controller.dart';
-import '../../../../language/language_controller.dart';
 import '../../../../utils/svg_assets.dart';
 import '../../../../widgets/custom_dropdown_widget/custom_dropdown_widget.dart';
 
@@ -17,34 +15,341 @@ class MoneyExchangeScreen extends GetView<MoneyExchangeController> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Container(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        child: Stack(
-          children: [
-            Container(
-              height: MediaQuery.of(context).size.height * .27,
-              decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(Dimensions.radius * 3),
-                    bottomRight: Radius.circular(Dimensions.radius * 3),
-                  )),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final scaffoldBg = isDark
+        ? CustomColor.primaryDarkScaffoldBackgroundColor
+        : CustomColor.primaryLightScaffoldBackgroundColor;
+
+    return ResponsiveLayout(
+      mobileScaffold: Scaffold(
+        backgroundColor: scaffoldBg,
+        appBar: const PrimaryAppBar(
+          title: Strings.exchange,
+          breadcrumbs: ['Home', 'Wallet', 'Exchange'],
+        ),
+        body: Obx(() {
+          if (controller.isLoading) return const CustomLoadingWidget();
+          return ListView(
+            physics: const BouncingScrollPhysics(),
+            padding: EdgeInsets.symmetric(
+              horizontal: Dimensions.paddingSizeHorizontal,
+              vertical: Dimensions.paddingSizeVertical,
             ),
-            ResponsiveLayout(
-              mobileScaffold: Scaffold(
-                  backgroundColor: Colors.transparent,
-                  appBar: const PrimaryAppBar(
-                    title: Strings.exchange,
+            children: [
+              _rateHeroCard(context, isDark),
+              SizedBox(height: Dimensions.marginSizeVertical * 1.2),
+              _currencyCard(context: context, isDark: isDark, isSource: true),
+              _swapSeparator(context, isDark),
+              _currencyCard(context: context, isDark: isDark, isSource: false),
+              SizedBox(height: Dimensions.marginSizeVertical * 1.8),
+              _exchangeButton(context, isDark),
+              SizedBox(height: Dimensions.paddingSizeVertical * 2),
+            ],
+          );
+        }),
+      ),
+    );
+  }
+
+  // ─── Rate Hero Card ──────────────────────────────────────────────────────
+
+  Widget _rateHeroCard(BuildContext context, bool isDark) {
+    final accent = isDark
+        ? CustomColor.primaryDarkColor
+        : CustomColor.primaryLightColor;
+    final textColor = isDark
+        ? CustomColor.primaryDarkTextColor
+        : CustomColor.primaryLightTextColor;
+
+    return Animate(
+      effects: [
+        FadeEffect(duration: 320.ms),
+        SlideEffect(begin: const Offset(0, -0.04), end: Offset.zero, duration: 320.ms),
+      ],
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: isDark
+                ? [
+                    CustomColor.primaryDarkColor.withOpacity(0.18),
+                    CustomColor.thirdColor.withOpacity(0.12),
+                  ]
+                : [
+                    CustomColor.primaryLightColor.withOpacity(0.1),
+                    CustomColor.thirdColor.withOpacity(0.05),
+                  ],
+          ),
+          borderRadius: BorderRadius.circular(Dimensions.radius * 2),
+          border: Border.all(
+            color: accent.withOpacity(0.22),
+            width: 1.5,
+          ),
+        ),
+        child: Column(
+          children: [
+            // ── "Live Rate" pill + spinner ──────────────────────────────────
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: accent.withOpacity(0.13),
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                  body: Obx(() => controller.isLoading
-                      ? const CustomLoadingWidget()
-                      : Column(
-                          children: [
-                            _infoWidget(context),
-                            _inputWidget(context),
-                          ],
-                        ))),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.bolt_rounded, size: 11, color: accent),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Live Rate',
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: accent,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Obx(() => controller.isRateFetching
+                    ? SizedBox(
+                        width: 12,
+                        height: 12,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: accent,
+                        ),
+                      )
+                    : const SizedBox.shrink()),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
+            // ── Rate display line ───────────────────────────────────────────
+            Obx(() => FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        '1 ',
+                        style: GoogleFonts.inter(
+                          fontSize: Dimensions.headingTextSize1 * 1.1,
+                          fontWeight: FontWeight.w800,
+                          color: textColor,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      Text(
+                        controller.fromSelectedCurrency.value,
+                        style: GoogleFonts.inter(
+                          fontSize: Dimensions.headingTextSize1 * 1.1,
+                          fontWeight: FontWeight.w800,
+                          color: accent,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: Text(
+                          '=',
+                          style: GoogleFonts.inter(
+                            fontSize: Dimensions.headingTextSize2,
+                            fontWeight: FontWeight.w300,
+                            color: textColor.withOpacity(0.4),
+                          ),
+                        ),
+                      ),
+                      Text(
+                        controller.exchangeRate.value.toFormattedCurrency(
+                            controller.toSelectedCurrencyType.value == 'FIAT'
+                                ? 2
+                                : 6),
+                        style: GoogleFonts.inter(
+                          fontSize: Dimensions.headingTextSize1 * 1.1,
+                          fontWeight: FontWeight.w800,
+                          color: textColor,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      Text(
+                        ' ${controller.toSelectedCurrency.value}',
+                        style: GoogleFonts.inter(
+                          fontSize: Dimensions.headingTextSize1 * 1.1,
+                          fontWeight: FontWeight.w800,
+                          color: accent,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                )),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ─── Currency Card ───────────────────────────────────────────────────────
+
+  Widget _currencyCard({
+    required BuildContext context,
+    required bool isDark,
+    required bool isSource,
+  }) {
+    final cardBg = isDark ? const Color(0xFF141921) : Colors.white;
+    final border = isDark
+        ? Colors.white.withOpacity(0.06)
+        : Colors.grey.withOpacity(0.13);
+    final textColor = isDark
+        ? CustomColor.primaryDarkTextColor
+        : CustomColor.primaryLightTextColor;
+    final label = isSource ? 'You Send' : 'You Receive';
+
+    return Animate(
+      effects: [
+        FadeEffect(duration: 320.ms, delay: isSource ? 60.ms : 110.ms),
+        SlideEffect(
+          begin: const Offset(0, 0.05),
+          end: Offset.zero,
+          duration: 320.ms,
+          delay: isSource ? 60.ms : 110.ms,
+        ),
+      ],
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.circular(Dimensions.radius * 2),
+          border: Border.all(color: border),
+          boxShadow: isDark
+              ? null
+              : [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 12,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Header ─────────────────────────────────────────────────────
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  label,
+                  style: GoogleFonts.inter(
+                    fontSize: Dimensions.headingTextSize5,
+                    fontWeight: FontWeight.w600,
+                    color: textColor.withOpacity(0.5),
+                  ),
+                ),
+                // Balance hint on the source card
+                if (isSource)
+                  Obx(() {
+                    if (!controller.hasModel) return const SizedBox.shrink();
+                    try {
+                      final w = controller.moneyExchangeModel.data.userWallet
+                          .firstWhere((w) =>
+                              w.currencyCode ==
+                              controller.fromSelectedCurrency.value);
+                      return Text(
+                        'Bal: ${w.balance.toFiatString()} ${w.currencyCode}',
+                        style: GoogleFonts.inter(
+                          fontSize: Dimensions.headingTextSize6,
+                          fontWeight: FontWeight.w500,
+                          color: Theme.of(context).primaryColor.withOpacity(0.85),
+                        ),
+                      );
+                    } catch (_) {
+                      return const SizedBox.shrink();
+                    }
+                  }),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
+            // ── Currency selector ──────────────────────────────────────────
+            // Uses a solid primaryColor background so the white dropdown text
+            // (isCurrencyDropDown: true forces white) is always legible.
+            ClipRRect(
+              borderRadius: BorderRadius.circular(Dimensions.radius * 1.2),
+              child: Container(
+                color: Theme.of(context).primaryColor,
+                child: isSource
+                    ? _fromDropdown(context, isDark)
+                    : _toDropdown(context, isDark),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // ── Amount input ───────────────────────────────────────────────
+            Container(
+              height: 58,
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.white.withOpacity(0.04)
+                    : const Color(0xFFF8FAFF),
+                borderRadius: BorderRadius.circular(Dimensions.radius * 1.2),
+                border: Border.all(color: border),
+              ),
+              alignment: Alignment.centerLeft,
+              child: isSource
+                  ? TextField(
+                      controller: controller.fromAmountController,
+                      keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true),
+                      style: GoogleFonts.inter(
+                        fontSize: Dimensions.headingTextSize2,
+                        fontWeight: FontWeight.w700,
+                        color: textColor,
+                        letterSpacing: -0.5,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: '0.00',
+                        hintStyle: GoogleFonts.inter(
+                          fontSize: Dimensions.headingTextSize2,
+                          fontWeight: FontWeight.w700,
+                          color: textColor.withOpacity(0.2),
+                          letterSpacing: -0.5,
+                        ),
+                        border: InputBorder.none,
+                        isDense: true,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                      onChanged: (_) => controller.calculateExchangeRate(),
+                    )
+                  // TO field: reads the observable, never steals focus
+                  : Obx(() {
+                      final val = controller.toAmountDisplay.value;
+                      return Text(
+                        val.isEmpty ? '0.00' : val,
+                        style: GoogleFonts.inter(
+                          fontSize: Dimensions.headingTextSize2,
+                          fontWeight: FontWeight.w700,
+                          color: val.isEmpty
+                              ? textColor.withOpacity(0.2)
+                              : textColor,
+                          letterSpacing: -0.5,
+                        ),
+                      );
+                    }),
             ),
           ],
         ),
@@ -52,318 +357,161 @@ class MoneyExchangeScreen extends GetView<MoneyExchangeController> {
     );
   }
 
-  _infoWidget(BuildContext context) {
-    return Expanded(
-      flex: 1,
-      child: Container(
-        width: double.infinity,
-        alignment: Alignment.center,
-        padding: EdgeInsets.symmetric(
-            horizontal: Dimensions.paddingSizeHorizontal * .5),
-        margin: EdgeInsets.only(
-          bottom: Dimensions.paddingSizeVertical * 1.8,
-          top: Dimensions.paddingSizeVertical * .5,
-          left: Dimensions.paddingSizeHorizontal,
-          right: Dimensions.paddingSizeHorizontal,
+  // ─── Swap Separator ──────────────────────────────────────────────────────
+
+  Widget _swapSeparator(BuildContext context, bool isDark) {
+    return Padding(
+      padding: EdgeInsets.symmetric(
+          vertical: Dimensions.marginSizeVertical * 0.55),
+      child: Center(
+        child: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: isDark
+                  ? [CustomColor.primaryDarkColor, CustomColor.thirdColor]
+                  : [CustomColor.primaryLightColor, CustomColor.thirdColor],
+            ),
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Theme.of(context).primaryColor.withOpacity(0.32),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Center(
+            child: Animate(
+              effects: const [FadeEffect(), ScaleEffect()],
+              child: SvgPicture.string(
+                SVGAssets.exchangeWhiteIcon,
+                height: 20,
+                width: 20,
+                fit: BoxFit.contain,
+              ),
+            ),
+          ),
         ),
-        decoration: BoxDecoration(
+      ),
+    );
+  }
+
+  // ─── Exchange Button ─────────────────────────────────────────────────────
+  // Uses Material + InkWell so gradient shows through without being covered
+  // by ElevatedButton's own Material surface layer.
+
+  Widget _exchangeButton(BuildContext context, bool isDark) {
+    return Obx(() {
+      final enabled = controller.canExchange;
+      return Opacity(
+        opacity: enabled ? 1.0 : 0.45,
+        child: Container(
+          height: 54,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            gradient: enabled
+                ? LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: isDark
+                        ? [
+                            CustomColor.primaryDarkColor,
+                            CustomColor.thirdColor,
+                          ]
+                        : [
+                            CustomColor.primaryLightColor,
+                            CustomColor.thirdColor,
+                          ],
+                  )
+                : null,
+            color: enabled
+                ? null
+                : (isDark ? Colors.grey[800] : Colors.grey[300]),
             borderRadius: BorderRadius.circular(Dimensions.radius * 1.5),
-            color: Theme.of(context).scaffoldBackgroundColor),
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // verticalSpace(Dimensions.paddingSizeVertical * 1),
-              Obx(() => FittedBox(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const TitleHeading1Widget(
-                          text: "1",
-                          fontWeight: FontWeight.bold,
-                        ),
-                        horizontalSpace(Dimensions.marginSizeHorizontal * .3),
-                        TitleHeading1Widget(
-                          text: controller.fromSelectedCurrency.value,
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).primaryColor,
-                        ),
-                        TitleHeading1Widget(
-                          text: "=",
-                          padding: EdgeInsets.symmetric(
-                              horizontal: Dimensions.marginSizeHorizontal * .3),
-                          fontWeight: FontWeight.bold,
-                        ),
-                        TitleHeading1Widget(
-                          text: controller.exchangeRate.value.toStringAsFixed(
-                              controller.toSelectedCurrencyType.value == "FIAT"
-                                  ? 2
-                                  : 6),
-                          fontWeight: FontWeight.bold,
-                        ),
-                        horizontalSpace(Dimensions.marginSizeHorizontal * .3),
-                        TitleHeading1Widget(
-                          text: controller.toSelectedCurrency.value,
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).primaryColor,
-                        ),
-                      ],
-                    ),
-                  )),
-              verticalSpace(Dimensions.marginSizeVertical * .3),
-              TitleHeading4Widget(
-                text: Strings.exchangeRate,
-                fontWeight: FontWeight.w400,
-                fontSize: Dimensions.headingTextSize4 * .85,
-                opacity: .4,
-              ),
-            ],
           ),
-        ),
-      ),
-    );
-  }
-
-  _inputWidget(BuildContext context) {
-    return Expanded(
-      flex: 3,
-      child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.symmetric(
-          horizontal: Dimensions.paddingSizeHorizontal * .85,
-          vertical: Dimensions.paddingSizeHorizontal * .85,
-        ),
-        decoration: BoxDecoration(
-            color: CustomColor.whiteColor,
-            borderRadius: BorderRadius.only(
-              topRight: Radius.circular(Dimensions.radius * 3),
-              topLeft: Radius.circular(Dimensions.radius * 3),
-            )),
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  Column(
-                    children: [
-                      _fromWidget(context),
-                      verticalSpace(Dimensions.marginSizeVertical * .5),
-                      _toWidget(context),
-                    ],
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: enabled
+                  ? () => controller.onExchangeBTNProcess(context)
+                  : null,
+              borderRadius: BorderRadius.circular(Dimensions.radius * 1.5),
+              splashColor: Colors.white.withOpacity(0.15),
+              highlightColor: Colors.white.withOpacity(0.05),
+              child: Center(
+                child: Text(
+                  'Exchange Now',
+                  style: GoogleFonts.inter(
+                    fontSize: Dimensions.headingTextSize4,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.3,
+                    color: enabled
+                        ? Colors.white
+                        : (isDark
+                            ? Colors.white.withOpacity(0.35)
+                            : Colors.black.withOpacity(0.3)),
                   ),
-                  Center(
-                      child: Animate(
-                          effects: const [FadeEffect(), ScaleEffect()],
-                          child: SvgPicture.string(
-                            SVGAssets.exchangeWhiteIcon,
-                            height: Dimensions.heightSize * 4.2,
-                            width: Dimensions.widthSize * 4.2,
-                          )))
-                ],
+                ),
               ),
-              verticalSpace(Dimensions.marginSizeVertical * .4),
-
-
-              Obx(() => Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _infoTextWidget(context, name: Strings.limit, value: '${controller.min.value} - ${controller.max.value} ${controller.fromSelectedCurrency.value}'),
-                  _infoTextWidget(context, name: Strings.charge, value: '${controller.fCharge.value.toStringAsFixed(controller.fromSelectedCurrencyType.value == "FIAT" ? 2 : 6)} ${controller.fromSelectedCurrency.value} + ${controller.moneyExchangeModel.data.charges.percentCharge}% = ${controller.tCharge.value.toStringAsFixed(controller.fromSelectedCurrencyType.value == "FIAT" ? 2 : 6)} ${controller.fromSelectedCurrency.value}'),
-
-                ],
-              )),
-              verticalSpace(Dimensions.marginSizeVertical * .8),
-              PrimaryButton(
-                title: Strings.exchangeCurrency,
-                onPressed: () {
-                  if (controller.fromSelectedCurrency.value !=
-                      controller.toSelectedCurrency.value) {
-                    controller.onExchangeBTNProcess(context);
-                  } else {
-                    CustomSnackBar.error(Strings.exchangeMSG);
-                  }
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  _infoTextWidget(BuildContext context,
-      {required String name, required String value}) {
-    return Row(
-      children: [
-        TitleHeading5Widget(
-          text: name,
-          textAlign: TextAlign.center,
-          color: Theme.of(context).primaryColor.withOpacity(.8),
-          fontWeight: FontWeight.w500,
-          fontSize: Dimensions.headingTextSize5 * .89,
-        ),
-        TitleHeading5Widget(
-          text: ": ",
-          textAlign: TextAlign.center,
-          color: Theme.of(context).primaryColor.withOpacity(.8),
-          fontWeight: FontWeight.w500,
-          fontSize: Dimensions.headingTextSize5 * .89,
-        ),
-        Directionality(
-          textDirection: TextDirection.ltr,
-          child: TitleHeading5Widget(
-            text: value,
-            textAlign: TextAlign.center,
-            color: Theme.of(context).primaryColor,
-            fontWeight: FontWeight.w600,
-            fontSize: Dimensions.headingTextSize5 * .85,
-          ),
-        ),
-      ],
-    );
-  }
-
-  _fromWidget(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: Dimensions.paddingSizeHorizontal * .7,
-        vertical: Dimensions.paddingSizeVertical * .7,
-      ),
-      decoration: BoxDecoration(
-          color: Theme.of(context).scaffoldBackgroundColor,
-          borderRadius: BorderRadius.circular(Dimensions.radius * 1.5)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          PrimaryTextInputWidget(
-            controller: controller.fromAmountController,
-            labelText: Strings.from.tr,
-            keyboardType: TextInputType.number,
-            hint: "0.00",
-            onChanged: (value) {
-              controller.calculateExchangeRate();
-            },
-            suffixIcon: Container(
-              // height: Dimensions.inputBoxHeight * 0.69,
-              width: Dimensions.widthSize * 9.5,
-              decoration: BoxDecoration(
-                  color: Theme.of(context).primaryColor,
-                  borderRadius: BorderRadius.only(
-                    topRight: Radius.circular(Get.find<LanguageSettingController>().selectedLanguage.value.contains("ar") ? 0: Dimensions.radius * .5),
-                    topLeft: Radius.circular(Get.find<LanguageSettingController>().selectedLanguage.value.contains("ar") ? Dimensions.radius * .5: 0),
-                    bottomRight: Radius.circular(Get.find<LanguageSettingController>().selectedLanguage.value.contains("ar") ? 0: Dimensions.radius * .5),
-                    bottomLeft: Radius.circular(Get.find<LanguageSettingController>().selectedLanguage.value.contains("ar") ? Dimensions.radius * .5: 0),
-                  )),
-              child: _fromCurrencyDropDown(context),
             ),
           ),
-        ],
-      ),
-    );
+        ),
+      );
+    });
   }
 
-  _toWidget(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: Dimensions.paddingSizeHorizontal * .7,
-        vertical: Dimensions.paddingSizeVertical * .7,
-      ),
-      decoration: BoxDecoration(
-          color: Theme.of(context).scaffoldBackgroundColor,
-          borderRadius: BorderRadius.circular(Dimensions.radius * 1.5)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          PrimaryTextInputWidget(
-            controller: controller.toAmountController,
-            keyboardType: TextInputType.number,
-            labelText: Strings.to.tr,
-            hint: "0.00",
-            readOnly: true,
-            suffixIcon: Container(
-              // height: Dimensions.inputBoxHeight * 0.69,
-              width: Dimensions.widthSize * 9.5,
-              decoration: BoxDecoration(
-                  color: Theme.of(context).primaryColor,
-                  borderRadius: BorderRadius.only(
-                    topRight: Radius.circular(Get.find<LanguageSettingController>().selectedLanguage.value.contains("ar") ? 0: Dimensions.radius * .5),
-                    topLeft: Radius.circular(Get.find<LanguageSettingController>().selectedLanguage.value.contains("ar") ? Dimensions.radius * .5: 0),
-                    bottomRight: Radius.circular(Get.find<LanguageSettingController>().selectedLanguage.value.contains("ar") ? 0: Dimensions.radius * .5),
-                    bottomLeft: Radius.circular(Get.find<LanguageSettingController>().selectedLanguage.value.contains("ar") ? Dimensions.radius * .5: 0),
-                  )),
-              child: _toCurrencyDropDown(context),
-            ),
-          ),
-        ],
-      ),
-    );
+  // ─── Dropdowns ───────────────────────────────────────────────────────────
+
+  Widget _fromDropdown(BuildContext context, bool isDark) {
+    return Obx(() => CustomDropDown<UserWallet>(
+          isCurrencyDropDown: true,
+          items: controller.fromWallets,
+          hint: controller.fromSelectedCurrency.value.isEmpty
+              ? 'Select'
+              : controller.fromSelectedCurrency.value,
+          onChanged: (value) {
+            if (value == null) return;
+            controller.fromSelectedCurrency.value     = value.currencyCode;
+            controller.fromSelectedCurrencyType.value = value.type;
+            controller.fromSelectedCurrencyRate.value =
+                double.parse(value.rate.toString());
+            controller.onCurrencyChanged();
+          },
+          padding: EdgeInsets.zero,
+          titleTextColor: CustomColor.whiteColor,
+          // dropDownColor controls the open menu background
+          dropDownColor: isDark ? const Color(0xFF1E2435) : Colors.white,
+          borderEnable: false,
+          dropDownFieldColor: Colors.transparent,
+          dropDownIconColor: CustomColor.whiteColor,
+        ));
   }
 
-  _fromCurrencyDropDown(BuildContext context) {
-    return Column(
-      children: [
-        Obx(() => CustomDropDown<UserWallet>(
-              isCurrencyDropDown: true,
-              items: controller.moneyExchangeModel.data.userWallet,
-              hint: controller.fromSelectedCurrency.value.isEmpty
-                  ? Strings.selectIDType
-                  : controller.fromSelectedCurrency.value,
-              onChanged: (value) {
-                controller.fromSelectedCurrency.value = value!.currencyCode;
-                controller.fromSelectedCurrencyType.value = value.type;
-                controller.fromSelectedCurrencyRate.value = value.rate;
-                controller.calculateExchangeRate();
-              },
-              padding: EdgeInsets.symmetric(
-                horizontal: Dimensions.paddingSizeHorizontal * 0,
-              ),
-              titleTextColor: CustomColor.whiteColor,
-              dropDownColor: Theme.of(context).primaryColor,
-              borderEnable: true,
-              dropDownFieldColor: Theme.of(context).primaryColor,
-              dropDownIconColor: CustomColor.whiteColor,
-              border: Border.all(
-                color: Theme.of(context).primaryColor,
-              ),
-            )),
-      ],
-    );
-  }
-
-  _toCurrencyDropDown(BuildContext context) {
-    return Column(
-      children: [
-        Obx(() => CustomDropDown<UserWallet>(
-              isCurrencyDropDown: true,
-              items: controller.moneyExchangeModel.data.userWallet,
-              hint: controller.toSelectedCurrency.value.isEmpty
-                  ? Strings.selectIDType
-                  : controller.toSelectedCurrency.value,
-              onChanged: (value) {
-                controller.toSelectedCurrency.value = value!.title;
-                controller.toSelectedCurrencyRate.value = value.rate;
-                controller.toSelectedCurrencyType.value = value.type;
-                controller.calculateExchangeRate();
-              },
-              padding: EdgeInsets.symmetric(
-                horizontal: Dimensions.paddingSizeHorizontal * 0,
-              ),
-              titleTextColor: CustomColor.whiteColor,
-              dropDownColor: Theme.of(context).primaryColor,
-              borderEnable: true,
-              dropDownFieldColor: Theme.of(context).primaryColor,
-              dropDownIconColor: CustomColor.whiteColor,
-              border: Border.all(
-                color: Theme.of(context).primaryColor,
-              ),
-            )),
-      ],
-    );
+  Widget _toDropdown(BuildContext context, bool isDark) {
+    return Obx(() => CustomDropDown<UserWallet>(
+          isCurrencyDropDown: true,
+          items: controller.toWallets,
+          hint: controller.toSelectedCurrency.value == '--'
+              ? 'Select'
+              : controller.toSelectedCurrency.value,
+          onChanged: (value) {
+            if (value == null) return;
+            controller.toSelectedCurrency.value     = value.currencyCode;
+            controller.toSelectedCurrencyRate.value =
+                double.parse(value.rate.toString());
+            controller.toSelectedCurrencyType.value = value.type;
+            controller.onCurrencyChanged();
+          },
+          padding: EdgeInsets.zero,
+          titleTextColor: CustomColor.whiteColor,
+          dropDownColor: isDark ? const Color(0xFF1E2435) : Colors.white,
+          borderEnable: false,
+          dropDownFieldColor: Colors.transparent,
+          dropDownIconColor: CustomColor.whiteColor,
+        ));
   }
 }

@@ -17,6 +17,7 @@ class NotificationScreen extends GetView<NotificationController> {
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           appBar: const PrimaryAppBar(
             title: Strings.notifications,
+            breadcrumbs: ['Home', 'Notifications'],
           ),
           body: Obx(() => controller.isLoading ? const CustomLoadingWidget(): controller.notificationModel.data.notifications.isEmpty
               ? const Column(

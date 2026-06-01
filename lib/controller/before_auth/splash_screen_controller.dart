@@ -15,6 +15,7 @@ class SplashController extends GetxController {
   }
 
   _goToScreen() async {
+    await LocalStorage.restoreTokenFromSecureStorage();
     Timer(const Duration(seconds: 4), () {
       LocalStorage.isLoggedIn()
           ? Get.find<BiometricController>().supportState == SupportState.supported

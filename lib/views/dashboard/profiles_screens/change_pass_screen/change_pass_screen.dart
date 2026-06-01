@@ -16,6 +16,7 @@ class ChangePassScreen extends GetView<ChangePasswordController> {
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           appBar: const PrimaryAppBar(
             title: Strings.changePassword,
+            breadcrumbs: ['Home', 'Profile', 'Change Password'],
           ),
           body: _bottomBodyWidget(context),
         ),

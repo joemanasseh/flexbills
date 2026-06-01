@@ -11,22 +11,23 @@ import 'backend_utils/custom_snackbar.dart';
 
 mixin DownloadFile {
   Future<bool> checkPermission() async {
+    // androidInfo is only valid on Android. On iOS (and simulator) the
+    // DeviceInfoPlugin returns null fields, which crashes the cast.
+    if (!Platform.isAndroid) return true;
+
     bool checkPermission1 = await Permission.storage.isGranted;
 
-    //For android
-    DeviceInfoPlugin plugin = DeviceInfoPlugin();
-    AndroidDeviceInfo android = await plugin.androidInfo;
-    debugPrint(android.version.sdkInt.toString());
+    final DeviceInfoPlugin plugin = DeviceInfoPlugin();
+    final AndroidDeviceInfo android = await plugin.androidInfo;
+    debugPrint('SDK: ${android.version.sdkInt}');
+
     if (android.version.sdkInt < 33) {
-      debugPrint("SDK Version < 33");
       if (await Permission.storage.request().isGranted) {
         checkPermission1 = true;
       } else if (await Permission.storage.request().isPermanentlyDenied) {
         await openAppSettings();
       }
     } else {
-
-      debugPrint("SDK Version > 33");
       if (await Permission.photos.request().isGranted) {
         checkPermission1 = true;
       } else if (await Permission.photos.request().isPermanentlyDenied) {
@@ -35,8 +36,6 @@ mixin DownloadFile {
         checkPermission1 = false;
       }
     }
-
-    debugPrint(checkPermission1.toString());
 
     return checkPermission1;
   }

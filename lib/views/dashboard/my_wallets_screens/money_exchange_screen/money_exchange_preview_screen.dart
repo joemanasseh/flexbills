@@ -19,6 +19,7 @@ class MoneyExchangePreviewScreen extends GetView<MoneyExchangeController> {
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             appBar: const PrimaryAppBar(
               title: Strings.preview,
+              breadcrumbs: ['Home', 'Wallet', 'Exchange', 'Preview'],
             ),
             body: _bodyWidget(context)),
       ),
@@ -158,7 +159,7 @@ class MoneyExchangePreviewScreen extends GetView<MoneyExchangeController> {
           _divider(),
           TextValueFormWidget(
             text: Strings.exchangeRate,
-            currency: "1 ${controller.fromSelectedCurrency.value} = ${controller.exchangeRate.value.toStringAsFixed(2)} ${controller.toSelectedCurrency.value}",
+            currency: "1 ${controller.fromSelectedCurrency.value} = ${controller.exchangeRate.value.toRateString(2)} ${controller.toSelectedCurrency.value}",
           ),
           _divider(),
           TextValueFormWidget(

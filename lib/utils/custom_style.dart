@@ -1,61 +1,74 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'custom_color.dart';
 import 'dimensions.dart';
 
 class CustomStyle {
+  static String get _font => GoogleFonts.inter().fontFamily!;
+
 //------------------------dark--------------------------------
-  static var darkHeading1TextStyle = TextStyle(
+  static TextStyle get darkHeading1TextStyle => TextStyle(
     color: CustomColor.primaryDarkTextColor,
     fontSize: Dimensions.headingTextSize1,
     fontWeight: FontWeight.w700,
+    fontFamily: _font,
   );
-  static var darkHeading2TextStyle = TextStyle(
+  static TextStyle get darkHeading2TextStyle => TextStyle(
     color: CustomColor.primaryDarkTextColor,
     fontSize: Dimensions.headingTextSize2,
     fontWeight: FontWeight.w700,
+    fontFamily: _font,
   );
-  static var darkHeading3TextStyle = TextStyle(
+  static TextStyle get darkHeading3TextStyle => TextStyle(
     color: CustomColor.primaryDarkTextColor,
     fontSize: Dimensions.headingTextSize3,
     fontWeight: FontWeight.w700,
+    fontFamily: _font,
   );
-  static var darkHeading4TextStyle = TextStyle(
+  static TextStyle get darkHeading4TextStyle => TextStyle(
     color: CustomColor.primaryDarkTextColor,
     fontSize: Dimensions.headingTextSize4,
     fontWeight: FontWeight.w400,
+    fontFamily: _font,
   );
-  static var darkHeading5TextStyle = TextStyle(
+  static TextStyle get darkHeading5TextStyle => TextStyle(
     color: CustomColor.primaryDarkTextColor,
     fontSize: Dimensions.headingTextSize5,
     fontWeight: FontWeight.w400,
+    fontFamily: _font,
   );
 
 //------------------------light--------------------------------
-  static var lightHeading1TextStyle = TextStyle(
+  static TextStyle get lightHeading1TextStyle => TextStyle(
     color: CustomColor.primaryLightTextColor,
     fontSize: Dimensions.headingTextSize1,
     fontWeight: FontWeight.w700,
+    fontFamily: _font,
   );
-  static var lightHeading2TextStyle = TextStyle(
+  static TextStyle get lightHeading2TextStyle => TextStyle(
     color: CustomColor.primaryLightTextColor,
     fontSize: Dimensions.headingTextSize2,
     fontWeight: FontWeight.w700,
+    fontFamily: _font,
   );
-  static var lightHeading3TextStyle = TextStyle(
+  static TextStyle get lightHeading3TextStyle => TextStyle(
     color: CustomColor.primaryLightTextColor,
     fontSize: Dimensions.headingTextSize3,
     fontWeight: FontWeight.w700,
+    fontFamily: _font,
   );
-  static var lightHeading4TextStyle = TextStyle(
+  static TextStyle get lightHeading4TextStyle => TextStyle(
     color: CustomColor.primaryLightTextColor,
     fontSize: Dimensions.headingTextSize4,
     fontWeight: FontWeight.w400,
+    fontFamily: _font,
   );
-  static var lightHeading5TextStyle = TextStyle(
+  static TextStyle get lightHeading5TextStyle => TextStyle(
     color: CustomColor.primaryLightTextColor,
     fontSize: Dimensions.headingTextSize5,
     fontWeight: FontWeight.w400,
+    fontFamily: _font,
   );
 
   static var screenGradientBG2 = const BoxDecoration(

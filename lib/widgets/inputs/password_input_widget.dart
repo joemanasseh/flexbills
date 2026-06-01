@@ -14,6 +14,7 @@ class PasswordInputWidget extends StatefulWidget {
     this.focusedBorderWidth = 1.2,
     this.enabledBorderWidth = 1,
     this.color = Colors.transparent,
+    this.minLength = 8,
   });
   final TextEditingController controller;
   final String hintText;
@@ -22,6 +23,7 @@ class PasswordInputWidget extends StatefulWidget {
   final Color? color;
   final double focusedBorderWidth;
   final double enabledBorderWidth;
+  final int minLength;
 
   @override
   State<PasswordInputWidget> createState() => _PasswordInputWidgetState();
@@ -48,14 +50,17 @@ class _PasswordInputWidgetState extends State<PasswordInputWidget> {
           controller: widget.controller,
           keyboardType: widget.keyboardType,
           validator: (String? value) {
-            if (value!.isEmpty) {
+            final v = value ?? '';
+            if (v.isEmpty) {
               return Get.find<LanguageSettingController>().isLoading
                   ? ""
                   : Get.find<LanguageSettingController>()
                       .getTranslation(Strings.pleaseFillOutTheField);
-            } else {
-              return null;
             }
+            if (v.length < widget.minLength) {
+              return 'Password must be at least ${widget.minLength} characters';
+            }
+            return null;
           },
           decoration: InputDecoration(
             enabledBorder: OutlineInputBorder(

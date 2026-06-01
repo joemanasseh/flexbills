@@ -1,7 +1,6 @@
 import 'package:adescrow_app/widgets/list_tile/text_value_form_widget.dart';
 
 import '../../backend/models/dashboard/home_model.dart';
-import '../../extensions/custom_extensions.dart';
 import '../../utils/basic_widget_imports.dart';
 import '../text_labels/title_heading5_widget.dart';
 
@@ -164,7 +163,7 @@ class _TransactionTileWidgetState extends State<TransactionTileWidget> {
                         TextValueFormWidget(
                           text: Strings.exchangeRate,
                           value: "1 ${widget.transaction!.senderCurrencyCode} =",
-                          currency: "${(double.parse(widget.transaction!.exchangeRate.toString())).toStringAsFixed(2)} ${widget.transaction!.exchangeCurrency}",
+                          currency: "${(double.tryParse(widget.transaction!.exchangeRate.toString()) ?? 0.0).toFiatString()} ${widget.transaction!.exchangeCurrency}",
                         ),
                         _divider(),
                       ],

@@ -20,6 +20,7 @@ class UpdateProfileScreen extends GetView<UpdateProfileController> {
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           appBar: const PrimaryAppBar(
             title: Strings.updateProfile,
+            breadcrumbs: ['Home', 'Profile', 'Update'],
           ),
           body: Obx(() => controller.isLoading ? const CustomLoadingWidget(): Column(
             children: [

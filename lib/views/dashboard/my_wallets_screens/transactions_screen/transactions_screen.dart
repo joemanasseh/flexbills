@@ -18,13 +18,17 @@ class TransactionsScreen extends GetView<TransactionsController> {
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           appBar: const PrimaryAppBar(
             title: Strings.transactions,
+            breadcrumbs: ['Home', 'Wallet', 'Transactions'],
           ),
-          body: Get.find<HomeController>().homeModel.data.transactions.isEmpty ? const Column(children: [NoDataWidget()]): ListView.separated(
+          body: Builder(builder: (context) {
+            final transactions = Get.find<HomeController>().homeModel?.data.transactions ?? [];
+            if (transactions.isEmpty) return const Column(children: [NoDataWidget()]);
+            return ListView.separated(
               shrinkWrap: true,
               padding: EdgeInsets.only(
                 right: Dimensions.paddingSizeHorizontal * .85,
                 left: Dimensions.paddingSizeHorizontal * .85,
-                bottom: Dimensions.paddingSizeVertical* .85,
+                bottom: Dimensions.paddingSizeVertical * .85,
               ),
               scrollDirection: Axis.vertical,
               physics: const BouncingScrollPhysics(),
@@ -39,12 +43,13 @@ class TransactionsScreen extends GetView<TransactionsController> {
                   },
                   expansion: Get.find<HomeController>().openTileIndex.value == index,
                   inDashboard: false,
-                  transaction: Get.find<HomeController>().homeModel.data.transactions[index],
+                  transaction: transactions[index],
                 ));
               },
               separatorBuilder: (context, i) =>
                   verticalSpace(Dimensions.marginSizeVertical * .3),
-              itemCount: Get.find<HomeController>().homeModel.data.transactions.length),
+              itemCount: transactions.length);
+          }),
         ),
       ),
     );

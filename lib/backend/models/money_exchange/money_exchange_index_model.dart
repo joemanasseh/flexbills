@@ -1,3 +1,4 @@
+import '../../../utils/currency_flag_util.dart';
 import '../../../widgets/custom_dropdown_widget/custom_dropdown_widget.dart';
 
 class MoneyExchangeIndexModel {
@@ -82,43 +83,30 @@ class UserWallet extends DropdownModel{
   });
 
   factory UserWallet.fromJson(Map<String, dynamic> json) => UserWallet(
-    name: json["name"],
-    balance: json["balance"].toDouble(),
-    currencyCode: json["currency_code"],
-    currencySymbol: json["currency_symbol"],
-    currencyType: json["currency_type"],
-    rate: json["rate"].toDouble(),
-    flag: json["flag"],
-    imagePath: json["image_path"],
+    name: json["name"].toString(),
+    balance: double.parse(json["balance"].toString()),
+    currencyCode: json["currency_code"].toString(),
+    currencySymbol: json["currency_symbol"].toString(),
+    currencyType: json["currency_type"].toString(),
+    rate: double.parse(json["rate"].toString()),
+    flag: json["flag"].toString(),
+    imagePath: json["image_path"].toString(),
   );
 
   @override
-  // TODO: implement fCharge
-  double get fCharge => throw UnimplementedError();
-
+  double get fCharge => 0.0;
   @override
-  // TODO: implement id
-  String get id => throw UnimplementedError();
-
+  String get id => currencyCode;
   @override
-  // TODO: implement img
-  String get img => throw UnimplementedError();
-
+  String get img => flagUrl(currencyCode);
   @override
-  // TODO: implement max
-  double get max => throw UnimplementedError();
-
+  double get max => 0.0;
   @override
-  // TODO: implement mcode
-  String get mcode => throw UnimplementedError();
-
+  String get mcode => currencyCode;
   @override
-  // TODO: implement min
-  double get min => throw UnimplementedError();
-
+  double get min => 0.0;
   @override
-  // TODO: implement pCharge
-  double get pCharge => throw UnimplementedError();
+  double get pCharge => 0.0;
 
   @override
   // TODO: implement title

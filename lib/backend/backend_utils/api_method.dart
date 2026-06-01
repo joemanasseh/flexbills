@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import '../../routes/routes.dart';
 import '../../utils/basic_screen_imports.dart';
 import '../local_storage/local_storage.dart';
 import '../models/common/error_message_model.dart';
@@ -18,13 +20,23 @@ Map<String, String> basicHeaderInfo() {
 }
 
 Future<Map<String, String>> bearerHeaderInfo() async {
-  String accessToken = LocalStorage.getToken()!;
-
+  final String? accessToken = LocalStorage.getToken();
+  if (accessToken == null) {
+    await LocalStorage.logout();
+    Get.offAllNamed(Routes.loginScreen);
+    return {};
+  }
   return {
     HttpHeaders.acceptHeader: "application/json",
     HttpHeaders.contentTypeHeader: "application/json",
     HttpHeaders.authorizationHeader: "Bearer $accessToken",
   };
+}
+
+void _handleUnauthorized() {
+  LocalStorage.logout();
+  Get.offAllNamed(Routes.loginScreen);
+  CustomSnackBar.error('Session expired. Please log in again.');
 }
 
 class ApiMethod {
@@ -40,12 +52,8 @@ class ApiMethod {
     bool showResult = false,
     bool stream = false,
   }) async {
-    if(!stream) {
-      log.i(
-        '|📍📍📍|----------------- [[ GET ]] method details start -----------------|📍📍📍|');
-      log.i(url);
-      log.i(
-          '|📍📍📍|----------------- [[ GET ]] method details ended -----------------|📍📍📍|');
+    if (!stream && kDebugMode) {
+      log.i('GET $url');
     }
 
     try {
@@ -56,40 +64,47 @@ class ApiMethod {
           )
           .timeout(Duration(seconds: duration));
 
-      if(!stream) {
-        log.i(
-            '|📒📒📒|-----------------[[ GET ]] method response start -----------------|📒📒📒|');
-
-        if (showResult) {
-          log.i(response.body.toString());
-        }
-
-        log.i(response.statusCode);
-
-        log.i(
-            '|📒📒📒|-----------------[[ GET ]] method response end -----------------|📒📒📒|');
+      if (!stream && kDebugMode) {
+        log.i('GET ${response.statusCode}');
+        if (showResult) log.i(response.body);
       }
-      
+
+      if (response.statusCode == 401) {
+        _handleUnauthorized();
+        return null;
+      }
+      if (response.statusCode == 403) {
+        if (!stream) CustomSnackBar.error('You do not have permission to access this resource.');
+        return null;
+      }
+      if (response.statusCode == 404) {
+        log.i('404 $url — endpoint not found, skipping.');
+        return null;
+      }
+
       if (response.statusCode == code) {
+        if (response.body.isEmpty) {
+          if (!stream) CustomSnackBar.error('Server returned empty response');
+          return null;
+        }
         return jsonDecode(response.body);
       } else {
-        log.e('🐞🐞🐞 Error Alert On Status Code 🐞🐞🐞');
-
-        log.e(
-            'unknown error hitted in status code${jsonDecode(response.body)}');
-
-        ErrorResponse res = ErrorResponse.fromJson(jsonDecode(response.body));
-
-        if(!stream) {
-          CustomSnackBar.error(res.message!.error!.first.toString());
+        try {
+          if (response.body.isNotEmpty) {
+            ErrorResponse res = ErrorResponse.fromJson(jsonDecode(response.body));
+            if (!stream) CustomSnackBar.error(res.message!.error!.first.toString());
+          } else {
+            if (!stream) CustomSnackBar.error('Server returned an error');
+          }
+        } catch (_) {
+          if (!stream) CustomSnackBar.error('Server error occurred');
         }
-
         return null;
       }
     } on SocketException {
       log.e('🐞🐞🐞 Error Alert on Socket Exception 🐞🐞🐞');
 
-      if(!stream) {
+      if (!stream) {
         CustomSnackBar.error('Check your Internet Connection and try again!');
       }
       return null;
@@ -98,7 +113,7 @@ class ApiMethod {
 
       log.e('Time out exception$url');
 
-      if(!stream) {
+      if (!stream) {
         CustomSnackBar.error('Something Went Wrong! Try again');
       }
       return null;
@@ -110,6 +125,16 @@ class ApiMethod {
       log.e(err.toString());
 
       log.e(stackrace.toString());
+
+      return null;
+    } on FormatException catch (e) {
+      log.e('🐞🐞🐞 Error Alert FormatException 🐞🐞🐞');
+
+      log.e('Invalid JSON response: $e');
+
+      if (!stream) {
+        CustomSnackBar.error('Invalid server response format');
+      }
 
       return null;
     } catch (e) {
@@ -127,15 +152,7 @@ class ApiMethod {
   Future<Map<String, dynamic>?> post(String url, Map<String, dynamic> body,
       {int code = 200, int duration = 30, bool showResult = false}) async {
     try {
-      log.i(
-          '|📍📍📍|-----------------[[ POST ]] method details start -----------------|📍📍📍|');
-
-      log.i(url);
-
-      log.i(body);
-
-      log.i(
-          '|📍📍📍|-----------------[[ POST ]] method details end ------------|📍📍📍|');
+      if (kDebugMode) log.i('POST $url');
 
       final response = await http
           .post(
@@ -145,63 +162,61 @@ class ApiMethod {
           )
           .timeout(Duration(seconds: duration));
 
-      log.i(
-          '|📒📒📒|-----------------[[ POST ]] method response start ------------------|📒📒📒|');
-
-      if (showResult) {
-        log.i(response.body.toString());
+      if (kDebugMode) {
+        log.i('POST ${response.statusCode}');
+        if (showResult) log.i(response.body);
       }
 
-      log.i(response.statusCode);
-
-      log.i(
-          '|📒📒📒|-----------------[[ POST ]] method response end --------------------|📒📒📒|');
+      if (response.statusCode == 401) {
+        _handleUnauthorized();
+        return null;
+      }
+      if (response.statusCode == 403) {
+        // 403 = the account lacks permission for this resource.
+        // Do NOT logout — the token is still valid. Just surface an error.
+        CustomSnackBar.error('You do not have permission to access this resource.');
+        return null;
+      }
+      if (response.statusCode == 404) {
+        // 404 = endpoint not implemented on this server / not available for
+        // this account. Return null silently — the server's raw error body
+        // (e.g. "Unable to connect to API") would be confusing to the user.
+        log.w('404 on $url — endpoint not found, ignoring.');
+        return null;
+      }
 
       if (response.statusCode == code) {
+        if (response.body.isEmpty) {
+          CustomSnackBar.error('Server returned empty response');
+          return null;
+        }
         return jsonDecode(response.body);
       } else {
-        log.e('🐞🐞🐞 Error Alert On Status Code 🐞🐞🐞');
-
-        log.e(
-            'unknown error hitted in status code ${jsonDecode(response.body)}');
-
-        ErrorResponse res = ErrorResponse.fromJson(jsonDecode(response.body));
-
-        CustomSnackBar.error(res.message!.error!.first.toString());
-
+        try {
+          if (response.body.isNotEmpty) {
+            ErrorResponse res = ErrorResponse.fromJson(jsonDecode(response.body));
+            CustomSnackBar.error(res.message!.error!.first.toString());
+          } else {
+            CustomSnackBar.error('Server returned an error');
+          }
+        } catch (_) {
+          CustomSnackBar.error('Server error occurred');
+        }
         return null;
       }
     } on SocketException {
-      log.e('🐞🐞🐞 Error Alert on Socket Exception 🐞🐞🐞');
-
       CustomSnackBar.error('Check your Internet Connection and try again!');
-
       return null;
     } on TimeoutException {
-      log.e('🐞🐞🐞 Error Alert Timeout Exception🐞🐞🐞');
-
-      log.e('Time out exception$url');
-
       CustomSnackBar.error('Something Went Wrong! Try again');
-
       return null;
-    } on http.ClientException catch (err, stackrace) {
-      log.e('🐞🐞🐞 Error Alert Client Exception🐞🐞🐞');
-
-      log.e('client exception hitted');
-
-      log.e(err.toString());
-
-      log.e(stackrace.toString());
-
+    } on http.ClientException {
+      return null;
+    } on FormatException {
+      CustomSnackBar.error('Invalid server response format');
       return null;
     } catch (e) {
-      log.e('🐞🐞🐞 Other Error Alert 🐞🐞🐞');
-
-      log.e('❌❌❌ unlisted error received');
-
-      log.e("❌❌❌ $e");
-
+      log.e(e);
       return null;
     }
   }
@@ -209,19 +224,7 @@ class ApiMethod {
   // Param get method
   Future<Map<String, dynamic>?> paramGet(String url, Map<String, String> body,
       {int code = 200, int duration = 15, bool showResult = false}) async {
-    log.i(
-        '|Get param📍📍📍|----------------- [[ GET ]] param method Details Start -----------------|📍📍📍|');
-
-    log.i("##body given --> ");
-
-    if (showResult) {
-      log.i(body);
-    }
-
-    log.i("##url list --> $url");
-
-    log.i(
-        '|Get param📍📍📍|----------------- [[ GET ]] param method details ended ** ---------------|📍📍📍|');
+    if (kDebugMode) log.i('PARAM GET $url');
 
     try {
       final response = await http
@@ -229,166 +232,120 @@ class ApiMethod {
             Uri.parse(url).replace(queryParameters: body),
             headers: isBasic ? basicHeaderInfo() : await bearerHeaderInfo(),
           )
-          .timeout(const Duration(seconds: 15));
+          .timeout(Duration(seconds: duration));
 
-      log.i(
-          '|📒📒📒| ----------------[[ Get ]] Peram Response Start---------------|📒📒📒|');
-
-      if (showResult) {
-        log.i(response.body.toString());
+      if (kDebugMode) {
+        log.i('PARAM GET ${response.statusCode}');
+        if (showResult) log.i(response.body);
       }
 
-      log.i(
-          '|📒📒📒| ----------------[[ Get ]] Peram Response End **-----------------|📒📒📒|');
+      if (response.statusCode == 401) {
+        _handleUnauthorized();
+        return null;
+      }
+      if (response.statusCode == 403) {
+        // 403 = the account lacks permission for this resource.
+        // Do NOT logout — the token is still valid. Just surface an error.
+        CustomSnackBar.error('You do not have permission to access this resource.');
+        return null;
+      }
+      if (response.statusCode == 404) {
+        // 404 = endpoint not implemented on this server / not available for
+        // this account. Return null silently — the server's raw error body
+        // (e.g. "Unable to connect to API") would be confusing to the user.
+        log.w('404 on $url — endpoint not found, ignoring.');
+        return null;
+      }
 
       if (response.statusCode == code) {
         return jsonDecode(response.body);
       } else {
-        log.e('🐞🐞🐞 Error Alert 🐞🐞🐞');
-
-        log.e(
-            'unknown error hitted in status code  ${jsonDecode(response.body)}');
-
-        ErrorResponse res = ErrorResponse.fromJson(jsonDecode(response.body));
-
-        CustomSnackBar.error(res.message!.error!.first.toString());
-
+        try {
+          ErrorResponse res = ErrorResponse.fromJson(jsonDecode(response.body));
+          CustomSnackBar.error(res.message!.error!.first.toString());
+        } catch (_) {
+          CustomSnackBar.error('Server error occurred');
+        }
         return null;
       }
     } on SocketException {
-      log.e('🐞🐞🐞 Error Alert on Socket Exception 🐞🐞🐞');
-
       CustomSnackBar.error('Check your Internet Connection and try again!');
-
       return null;
     } on TimeoutException {
-      log.e('🐞🐞🐞 Error Alert 🐞🐞🐞');
-
-      log.e('Time out exception$url');
-
       CustomSnackBar.error('Something Went Wrong! Try again');
-
       return null;
-    } on http.ClientException catch (err, stackrace) {
-      log.e('🐞🐞🐞 Error Alert 🐞🐞🐞');
-
-      log.e('client exception hitted');
-
-      log.e(err.toString());
-
-      log.e(stackrace.toString());
-
+    } on http.ClientException {
       return null;
     } catch (e) {
-      log.e('🐞🐞🐞 Error Alert 🐞🐞🐞');
-
-      log.e('#url->$url||#body -> $body');
-
-      log.e('❌❌❌ unlisted error received');
-
-      log.e("❌❌❌ $e");
-
+      log.e(e);
       return null;
     }
   }
 
-  // Post Method
+  // Multipart single file
   Future<Map<String, dynamic>?> multipart(
       String url, Map<String, String> body, String filepath, String filedName,
       {int code = 200, bool showResult = false}) async {
+    if (kDebugMode) log.i('MULTIPART POST $url');
     try {
-      log.i(
-          '|📍📍📍|-----------------[[ Multipart ]] method details start -----------------|📍📍📍|');
-
-      log.i(url);
-
-      log.i(body);
-      log.i(filepath);
-
-      log.i(
-          '|📍📍📍|-----------------[[ Multipart ]] method details end ------------|📍📍📍|');
-
-      final request = http.MultipartRequest(
-        'POST',
-        Uri.parse(url),
-      )
+      final request = http.MultipartRequest('POST', Uri.parse(url))
         ..fields.addAll(body)
         ..headers.addAll({
-          'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'Authorization': 'Bearer ${LocalStorage.getToken()!}'
+          'Authorization': 'Bearer ${LocalStorage.getToken() ?? ""}'
         })
         ..files.add(await http.MultipartFile.fromPath(filedName, filepath));
-      var response = await request.send();
-      var jsonData = await http.Response.fromStream(response);
+      final response = await request.send();
+      final jsonData = await http.Response.fromStream(response);
 
-      log.i(
-          '|📒📒📒|-----------------[[ POST ]] method response start ------------------|📒📒📒|');
+      if (kDebugMode) {
+        log.i('MULTIPART POST ${response.statusCode}');
+        if (showResult) log.i(jsonData.body);
+      }
 
-      log.i(jsonData.body.toString());
-
-      log.i(response.statusCode);
-
-      log.i(
-          '|📒📒📒|-----------------[[ POST ]] method response end --------------------|📒📒📒|');
-
+      if (response.statusCode == 401) {
+        _handleUnauthorized();
+        return null;
+      }
+      if (response.statusCode == 403) {
+        // 403 = the account lacks permission for this resource.
+        // Do NOT logout — the token is still valid. Just surface an error.
+        CustomSnackBar.error('You do not have permission to access this resource.');
+        return null;
+      }
+      if (response.statusCode == 404) {
+        // 404 = endpoint not implemented on this server / not available for
+        // this account. Return null silently — the server's raw error body
+        // (e.g. "Unable to connect to API") would be confusing to the user.
+        log.w('404 on $url — endpoint not found, ignoring.');
+        return null;
+      }
       if (response.statusCode == code) {
         return jsonDecode(jsonData.body) as Map<String, dynamic>;
       } else {
-        log.e('🐞🐞🐞 Error Alert On Status Code 🐞🐞🐞');
-
-        log.e(
-            'unknown error hitted in status code ${jsonDecode(jsonData.body)}');
-
-        debugPrint("---------------");
-        // debugPrint(jsonDecode(jsonData.body)["message"]["error"]["files.0"].first);
-        //
-        // CustomSnackBar.error(jsonDecode(jsonData.body)["message"]["error"]["files.0"].first);
-
-
-        ErrorResponse res = ErrorResponse.fromJson(jsonDecode(jsonData.body));
-        CustomSnackBar.error(res.message!.error!.first.toString());
-
-        // CustomSnackBar.error(
-        //     jsonDecode(response.body)['message']['error'].toString());
+        try {
+          ErrorResponse res = ErrorResponse.fromJson(jsonDecode(jsonData.body));
+          CustomSnackBar.error(res.message!.error!.first.toString());
+        } catch (_) {
+          CustomSnackBar.error('Server error occurred');
+        }
         return null;
       }
     } on SocketException {
-      log.e('🐞🐞🐞 Error Alert on Socket Exception 🐞🐞🐞');
-
       CustomSnackBar.error('Check your Internet Connection and try again!');
-
       return null;
     } on TimeoutException {
-      log.e('🐞🐞🐞 Error Alert Timeout Exception🐞🐞🐞');
-
-      log.e('Time out exception$url');
-
       CustomSnackBar.error('Something Went Wrong! Try again');
-
       return null;
-    } on http.ClientException catch (err, stackrace) {
-      log.e('🐞🐞🐞 Error Alert Client Exception🐞🐞🐞');
-
-      log.e('client exception hitted');
-
-      log.e(err.toString());
-
-      log.e(stackrace.toString());
-
+    } on http.ClientException {
       return null;
     } catch (e) {
-      log.e('🐞🐞🐞 Other Error Alert 🐞🐞🐞');
-
-      log.e('❌❌❌ unlisted error received');
-
-      log.e("❌❌❌ $e");
-
+      log.e(e);
       return null;
     }
   }
 
-  // multipart multi file Method
+  // Multipart multiple files
   Future<Map<String, dynamic>?> multipartMultiFile(
     String url,
     Map<String, String> body, {
@@ -397,364 +354,239 @@ class ApiMethod {
     required List<String> pathList,
     required List<String> fieldList,
   }) async {
+    if (kDebugMode) log.i('MULTIPART MULTI POST $url');
     try {
-      log.i(
-          '|📍📍📍|-----------------[[ Multipart ]] method details start -----------------|📍📍📍|');
-
-      log.i(url);
-
-      if (showResult) {
-        log.i(body);
-        log.i(pathList);
-        log.i(fieldList);
-      }
-
-      log.i(
-          '|📍📍📍|-----------------[[ Multipart ]] method details end ------------|📍📍📍|');
-      final request = http.MultipartRequest(
-        'POST',
-        Uri.parse(url),
-      )
+      final request = http.MultipartRequest('POST', Uri.parse(url))
         ..fields.addAll(body)
         ..headers.addAll({
-          'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'Authorization': 'Bearer ${LocalStorage.getToken()!}'
+          'Authorization': 'Bearer ${LocalStorage.getToken() ?? ""}'
         });
-
       for (int i = 0; i < fieldList.length; i++) {
-        request.files
-            .add(await http.MultipartFile.fromPath(fieldList[i], pathList[i]));
+        request.files.add(await http.MultipartFile.fromPath(fieldList[i], pathList[i]));
+      }
+      final response = await request.send();
+      final jsonData = await http.Response.fromStream(response);
+
+      if (kDebugMode) {
+        log.i('MULTIPART MULTI POST ${response.statusCode}');
+        if (showResult) log.i(jsonData.body);
       }
 
-      var response = await request.send();
-      var jsonData = await http.Response.fromStream(response);
-
-      log.i(
-          '|📒📒📒|-----------------[[ POST ]] method response start ------------------|📒📒📒|');
-
-      log.i(jsonData.body.toString());
-
-      log.i(response.statusCode);
-
-      log.i(
-          '|📒📒📒|-----------------[[ POST ]] method response end --------------------|📒📒📒|');
-
+      if (response.statusCode == 401) {
+        _handleUnauthorized();
+        return null;
+      }
+      if (response.statusCode == 403) {
+        // 403 = the account lacks permission for this resource.
+        // Do NOT logout — the token is still valid. Just surface an error.
+        CustomSnackBar.error('You do not have permission to access this resource.');
+        return null;
+      }
+      if (response.statusCode == 404) {
+        // 404 = endpoint not implemented on this server / not available for
+        // this account. Return null silently — the server's raw error body
+        // (e.g. "Unable to connect to API") would be confusing to the user.
+        log.w('404 on $url — endpoint not found, ignoring.');
+        return null;
+      }
       if (response.statusCode == code) {
         return jsonDecode(jsonData.body) as Map<String, dynamic>;
       } else {
-        log.e('🐞🐞🐞 Error Alert On Status Code 🐞🐞🐞');
-
-        log.e(
-            'unknown error hitted in status code ${jsonDecode(jsonData.body)}');
-
-        ErrorResponse res = ErrorResponse.fromJson(jsonDecode(jsonData.body));
-
-        CustomSnackBar.error(res.message!.error!.first.toString());
-
-        // CustomSnackBar.error(
-        //     jsonDecode(response.body)['message']['error'].toString());
+        try {
+          ErrorResponse res = ErrorResponse.fromJson(jsonDecode(jsonData.body));
+          CustomSnackBar.error(res.message!.error!.first.toString());
+        } catch (_) {
+          CustomSnackBar.error('Server error occurred');
+        }
         return null;
       }
     } on SocketException {
-      log.e('🐞🐞🐞 Error Alert on Socket Exception 🐞🐞🐞');
-
       CustomSnackBar.error('Check your Internet Connection and try again!');
-
       return null;
     } on TimeoutException {
-      log.e('🐞🐞🐞 Error Alert Timeout Exception🐞🐞🐞');
-
-      log.e('Time out exception$url');
-
       CustomSnackBar.error('Something Went Wrong! Try again');
-
       return null;
-    } on http.ClientException catch (err, stackrace) {
-      log.e('🐞🐞🐞 Error Alert Client Exception🐞🐞🐞');
-
-      log.e('client exception hitted');
-
-      log.e(err.toString());
-
-      log.e(stackrace.toString());
-
+    } on http.ClientException {
       return null;
     } catch (e) {
-      log.e('🐞🐞🐞 Other Error Alert 🐞🐞🐞');
-
-      log.e('❌❌❌ unlisted error received');
-
-      log.e("❌❌❌ $e");
-
+      log.e(e);
       return null;
     }
   }
 
   // Delete method
   Future<Map<String, dynamic>?> delete(String url,
-      {int code = 202,
-      bool isLogout = false,
-      int duration = 15,
-      bool showResult = false}) async {
-    log.i(
-        '|📍📍📍|-----------------[[ DELETE ]] method details start-----------------|📍📍📍|');
-
-    log.i(url);
-
-    log.i(
-        '|📍📍📍|-----------------[[ DELETE ]] method details end ------------------|📍📍📍|');
-
+      {int code = 202, bool isLogout = false, int duration = 15, bool showResult = false}) async {
+    if (kDebugMode) log.i('DELETE $url');
     try {
-      var headers = isBasic ? basicHeaderInfo() : await bearerHeaderInfo();
-
-      if (isLogout) {
-// headers
-
-// ..addAll({"fcm_token": await FirebaseMessaging.instance.getToken()});
-      }
-
-      log.i(headers);
-
+      final headers = isBasic ? basicHeaderInfo() : await bearerHeaderInfo();
       final response = await http
-          .delete(
-            Uri.parse(url),
-            headers: headers,
-          )
+          .delete(Uri.parse(url), headers: headers)
           .timeout(Duration(seconds: duration));
 
-      log.i(
-          '|📒📒📒|----------------- [[ DELETE ]] method response start-----------------|📒📒📒|');
-
-      if (showResult) {
-        log.i(response.body.toString());
+      if (kDebugMode) {
+        log.i('DELETE ${response.statusCode}');
+        if (showResult) log.i(response.body);
       }
 
-      log.i(response.statusCode);
-
-      log.i(
-          '|📒📒📒|----------------- [[ DELETE ]] method response start-----------------|📒📒📒|');
-
+      if (response.statusCode == 401) {
+        _handleUnauthorized();
+        return null;
+      }
+      if (response.statusCode == 403) {
+        // 403 = the account lacks permission for this resource.
+        // Do NOT logout — the token is still valid. Just surface an error.
+        CustomSnackBar.error('You do not have permission to access this resource.');
+        return null;
+      }
+      if (response.statusCode == 404) {
+        // 404 = endpoint not implemented on this server / not available for
+        // this account. Return null silently — the server's raw error body
+        // (e.g. "Unable to connect to API") would be confusing to the user.
+        log.w('404 on $url — endpoint not found, ignoring.');
+        return null;
+      }
       if (response.statusCode == code) {
-// LocalStorage.clear();
-
         return jsonDecode(response.body);
       } else {
-        log.e('🐞🐞🐞 Error Alert 🐞🐞🐞');
-
-        log.e(
-            'unknown error hitted in status code  ${jsonDecode(response.body)}');
-
-        ErrorResponse res = ErrorResponse.fromJson(jsonDecode(response.body));
-
-        CustomSnackBar.error(res.message!.error!.first.toString());
-
+        try {
+          ErrorResponse res = ErrorResponse.fromJson(jsonDecode(response.body));
+          CustomSnackBar.error(res.message!.error!.first.toString());
+        } catch (_) {
+          CustomSnackBar.error('Server error occurred');
+        }
         return null;
       }
     } on SocketException {
-      log.e('🐞🐞🐞 Error Alert on Socket Exception 🐞🐞🐞');
-
       CustomSnackBar.error('Check your Internet Connection and try again!');
-
       return null;
     } on TimeoutException {
-      log.e('🐞🐞🐞 Error Alert 🐞🐞🐞');
-
-      log.e('Time out exception$url');
-
       CustomSnackBar.error('Something Went Wrong! Try again');
-
       return null;
-    } on http.ClientException catch (err, stackrace) {
-      log.e('🐞🐞🐞 Error Alert 🐞🐞🐞');
-
-      log.e('client exception hitted');
-
-      log.e(err.toString());
-
-      log.e(stackrace.toString());
-
+    } on http.ClientException {
       return null;
     } catch (e) {
-      log.e('🐞🐞🐞 Error Alert 🐞🐞🐞');
-
-      log.e('❌❌❌ unlisted error received');
-
-      log.e("❌❌❌ $e");
-
+      log.e(e);
       return null;
     }
   }
 
   Future<Map<String, dynamic>?> put(String url, Map<String, String> body,
       {int code = 202, int duration = 15, bool showResult = false}) async {
+    if (kDebugMode) log.i('PUT $url');
     try {
-      log.i(
-          '|📍📍📍|-------------[[ PUT ]] method details start-----------------|📍📍📍|');
-
-      log.i(url);
-
-      log.i(body);
-
-      log.i(
-          '|📍📍📍|-------------[[ PUT ]] method details end ------------|📍📍📍|');
-
       final response = await http
-          .put(
-            Uri.parse(url),
-            body: jsonEncode(body),
-            headers: isBasic ? basicHeaderInfo() : await bearerHeaderInfo(),
-          )
+          .put(Uri.parse(url), body: jsonEncode(body),
+              headers: isBasic ? basicHeaderInfo() : await bearerHeaderInfo())
           .timeout(Duration(seconds: duration));
 
-      log.i(
-          '|📒📒📒|-----------------[[ PUT ]] AKA Update method response start-----------------|📒📒📒|');
-
-      if (showResult) {
-        log.i(response.body);
+      if (kDebugMode) {
+        log.i('PUT ${response.statusCode}');
+        if (showResult) log.i(response.body);
       }
 
-      log.i(response.statusCode);
-
-      log.i(
-          '|📒📒📒|-----------------[[ PUT ]] AKA Update method response End -----------------|📒📒📒|');
-
+      if (response.statusCode == 401) {
+        _handleUnauthorized();
+        return null;
+      }
+      if (response.statusCode == 403) {
+        // 403 = the account lacks permission for this resource.
+        // Do NOT logout — the token is still valid. Just surface an error.
+        CustomSnackBar.error('You do not have permission to access this resource.');
+        return null;
+      }
+      if (response.statusCode == 404) {
+        // 404 = endpoint not implemented on this server / not available for
+        // this account. Return null silently — the server's raw error body
+        // (e.g. "Unable to connect to API") would be confusing to the user.
+        log.w('404 on $url — endpoint not found, ignoring.');
+        return null;
+      }
       if (response.statusCode == code) {
         return jsonDecode(response.body);
       } else {
-        log.e('🐞🐞🐞 Error Alert 🐞🐞🐞');
-
-        log.e(
-            'unknown error hitted in status code  ${jsonDecode(response.body)}');
-
-        ErrorResponse res = ErrorResponse.fromJson(jsonDecode(response.body));
-
-        CustomSnackBar.error(res.message!.error!.first.toString());
-
+        try {
+          ErrorResponse res = ErrorResponse.fromJson(jsonDecode(response.body));
+          CustomSnackBar.error(res.message!.error!.first.toString());
+        } catch (_) {
+          CustomSnackBar.error('Server error occurred');
+        }
         return null;
       }
     } on SocketException {
-      log.e('🐞🐞🐞 Error Alert on Socket Exception 🐞🐞🐞');
-
       CustomSnackBar.error('Check your Internet Connection and try again!');
-
       return null;
     } on TimeoutException {
-      log.e('🐞🐞🐞 Error Alert 🐞🐞🐞');
-
-      log.e('Time out exception$url');
-
       CustomSnackBar.error('Request Timed out! Try again');
-
       return null;
-    } on http.ClientException catch (err, stackrace) {
-      log.e('🐞🐞🐞 Error Alert 🐞🐞🐞');
-
-      log.e('client exception hitted');
-
-      log.e(err.toString());
-
-      log.e(stackrace.toString());
-
+    } on http.ClientException {
       return null;
     } catch (e) {
-      log.e('🐞🐞🐞 Error Alert 🐞🐞🐞');
-
-      log.e('unlisted catch error received');
-
-      log.e(e.toString());
-
+      log.e(e);
       return null;
     }
   }
 
-
-  // Post Method for conversation
+  // Multipart for conversation
   Future<Map<String, dynamic>?> multipart2(
       String url, Map<String, String> body, String filepath, String filedName,
       {int code = 200, bool showResult = false}) async {
+    if (kDebugMode) log.i('MULTIPART2 POST $url');
     try {
-      log.i(
-          '|📍📍📍|-----------------[[ Multipart ]] method details start -----------------|📍📍📍|');
-
-      log.i(url);
-
-      log.i(body);
-      log.i(filepath);
-
-      log.i(
-          '|📍📍📍|-----------------[[ Multipart ]] method details end ------------|📍📍📍|');
-
-      final request = http.MultipartRequest(
-        'POST',
-        Uri.parse(url),
-      )
+      final request = http.MultipartRequest('POST', Uri.parse(url))
         ..fields.addAll(body)
         ..headers.addAll({
-          'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'Authorization': 'Bearer ${LocalStorage.getToken()!}'
+          'Authorization': 'Bearer ${LocalStorage.getToken() ?? ""}'
         })
         ..files.add(await http.MultipartFile.fromPath(filedName, filepath));
-      var response = await request.send();
-      var jsonData = await http.Response.fromStream(response);
+      final response = await request.send();
+      final jsonData = await http.Response.fromStream(response);
 
-      log.i(
-          '|📒📒📒|-----------------[[ POST ]] method response start ------------------|📒📒📒|');
+      if (kDebugMode) {
+        log.i('MULTIPART2 POST ${response.statusCode}');
+        if (showResult) log.i(jsonData.body);
+      }
 
-      log.i(jsonData.body.toString());
-
-      log.i(response.statusCode);
-
-      log.i(
-          '|📒📒📒|-----------------[[ POST ]] method response end --------------------|📒📒📒|');
-
+      if (response.statusCode == 401) {
+        _handleUnauthorized();
+        return null;
+      }
+      if (response.statusCode == 403) {
+        // 403 = the account lacks permission for this resource.
+        // Do NOT logout — the token is still valid. Just surface an error.
+        CustomSnackBar.error('You do not have permission to access this resource.');
+        return null;
+      }
+      if (response.statusCode == 404) {
+        // 404 = endpoint not implemented on this server / not available for
+        // this account. Return null silently — the server's raw error body
+        // (e.g. "Unable to connect to API") would be confusing to the user.
+        log.w('404 on $url — endpoint not found, ignoring.');
+        return null;
+      }
       if (response.statusCode == code) {
         return jsonDecode(jsonData.body) as Map<String, dynamic>;
       } else {
-        log.e('🐞🐞🐞 Error Alert On Status Code 🐞🐞🐞');
-
-        log.e(
-            'unknown error hitted in status code ${jsonDecode(jsonData.body)}');
-
-        debugPrint("---------------");
-        debugPrint(jsonDecode(jsonData.body)["message"]["error"]["files.0"].first);
-        //
-        CustomSnackBar.error(jsonDecode(jsonData.body)["message"]["error"]["files.0"].first);
-
+        try {
+          final error = jsonDecode(jsonData.body)["message"]["error"]["files.0"]?.first;
+          CustomSnackBar.error(error ?? 'Server error occurred');
+        } catch (_) {
+          CustomSnackBar.error('Server error occurred');
+        }
         return null;
       }
     } on SocketException {
-      log.e('🐞🐞🐞 Error Alert on Socket Exception 🐞🐞🐞');
-
       CustomSnackBar.error('Check your Internet Connection and try again!');
-
       return null;
     } on TimeoutException {
-      log.e('🐞🐞🐞 Error Alert Timeout Exception🐞🐞🐞');
-
-      log.e('Time out exception$url');
-
       CustomSnackBar.error('Something Went Wrong! Try again');
-
       return null;
-    } on http.ClientException catch (err, stackrace) {
-      log.e('🐞🐞🐞 Error Alert Client Exception🐞🐞🐞');
-
-      log.e('client exception hitted');
-
-      log.e(err.toString());
-
-      log.e(stackrace.toString());
-
+    } on http.ClientException {
       return null;
     } catch (e) {
-      log.e('🐞🐞🐞 Other Error Alert 🐞🐞🐞');
-
-      log.e('❌❌❌ unlisted error received');
-
-      log.e("❌❌❌ $e");
-
+      log.e(e);
       return null;
     }
   }

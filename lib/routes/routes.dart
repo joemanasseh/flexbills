@@ -11,8 +11,10 @@ class Routes {
   static const String welcomeScreen = '/welcomeScreen';
 
   static const String billsScreen = '/billsScreen';
-  static const String billDetailsScreen = '/billDetailsScreen';
-  static const String payBillScreen = '/payBillScreen';
+  static const String billBillerScreen = '/billBillerScreen';
+  static const String billFormScreen = '/billFormScreen';
+  static const String billPreviewScreen = '/billPreviewScreen';
+  static const String billStatusScreen = '/billStatusScreen';
 
   static const String loginScreen = '/loginScreen';
   static const String faVerifyScreen = '/faVerifyScreen';
@@ -26,14 +28,6 @@ class Routes {
   static const String dashboardScreen = '/dashboardScreen';
   static const String notificationScreen = '/notificationScreen';
 
-  static const String conversationScreen = '/conversationScreen';
-  static const String addNewEscrowScreen = '/addNewEscrowScreen';
-  static const String addNewEscrowPreviewScreen = '/addNewEscrowPreviewScreen';
-  static const String escrowManualScreen = '/escrowManualScreen';
-  static const String buyerPaymentManualScreen = '/buyerPaymentManualScreen';
-  static const String buyerPaymentScreen = '/buyerPaymentScreen';
-
-  
   static const String currentBalanceScreen = '/currentBalanceScreen';
 
   static const String addMoneyScreen = '/addMoneyScreen';
@@ -43,6 +37,7 @@ class Routes {
   static const String moneyOutScreen = '/moneyOutScreen';
   static const String moneyOutManualScreen = '/moneyOutManualScreen';
   static const String moneyOutScreenPreview = '/moneyOutScreenPreview';
+  static const String payoutPendingScreen = '/payoutPendingScreen';
 
   static const String moneyExchangeScreen = '/exchangeScreen';
   static const String moneyExchangeScreenPreview = '/moneyExchangeScreenPreview';

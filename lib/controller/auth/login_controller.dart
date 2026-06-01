@@ -43,68 +43,49 @@ class LoginController extends GetxController{
   final _isLoading = false.obs;
   bool get isLoading => _isLoading.value;
 
-  late LoginModel _signInModel;
-  LoginModel get signInModel => _signInModel;
-
-
-  Future<LoginModel> signInProcess() async {
+  Future<void> signInProcess() async {
     _isLoading.value = true;
     update();
 
-    Map<String, dynamic> inputBody = {
-      'email': emailController.text,
+    final Map<String, dynamic> inputBody = {
+      'email': emailController.text.trim(),
       'password': passwordController.text,
     };
 
-    await ApiServices.signInApi(body: inputBody).then((value) {
-      _signInModel = value!;
-
-      int kycVerified = _signInModel.data.user.kycVerified;
-      int twoFaStatus = _signInModel.data.user.twoFactorStatus;
-      int twoFaVerified = _signInModel.data.user.twoFactorVerified;
-
-      // save token
-      LocalStorage.saveToken(token: _signInModel.data.token);
-
-      if (_signInModel.data.user.emailVerified == 0) {
-        Get.toNamed(Routes.registerOTPScreen);
-      }
-      else {
-        debugPrint("Email Verified => Login Process :: ${twoFaStatus.toString()} :: ${twoFaVerified.toString()}");
-        debugPrint("Email Verified => Login Process :: ${twoFaStatus.toString()} :: ${twoFaVerified.toString()}");
-        debugPrint("Email Verified => Login Process :: ${twoFaStatus.toString()} :: ${twoFaVerified.toString()}");
-
-        if(kycVerified == 0){
-          Get.toNamed(Routes.kycFormScreen);
-        }
-        else{
-          /// this is for 2fa check
-          if (twoFaStatus == 1 && twoFaVerified == 0) {
-            Get.toNamed(Routes.faVerifyScreen);
-          } else {
-            _goToSavedUser(_signInModel);
-          }
-        }
-
+    try {
+      final value = await ApiServices.signInApi(body: inputBody);
+      if (value == null) {
         _isLoading.value = false;
         update();
+        return;
       }
 
-      update();
-    }).catchError((onError) {
-      log.e(onError);
-    });
+      final int kycVerified = value.data.user.kycVerified;
+      final int twoFaStatus = value.data.user.twoFactorStatus;
+      final int twoFaVerified = value.data.user.twoFactorVerified;
+
+      await LocalStorage.saveToken(token: value.data.token);
+
+      if (value.data.user.emailVerified == 0) {
+        Get.toNamed(Routes.registerOTPScreen);
+      } else if (kycVerified == 0) {
+        Get.toNamed(Routes.kycFormScreen);
+      } else if (twoFaStatus == 1 && twoFaVerified == 0) {
+        Get.toNamed(Routes.faVerifyScreen);
+      } else {
+        await _goToSavedUser(value);
+      }
+    } catch (e) {
+      log.e(e);
+    }
 
     _isLoading.value = false;
     update();
-    return _signInModel;
   }
 
-  void _goToSavedUser(LoginModel signInModel) {
-    debugPrint("Verified => Save User and Dashboard");
-
-    LocalStorage.isLoginSuccess(isLoggedIn: true);
-    LocalStorage.saveEmail(email: emailController.text);
+  Future<void> _goToSavedUser(LoginModel signInModel) async {
+    await LocalStorage.isLoginSuccess(isLoggedIn: true);
+    await LocalStorage.saveEmail(email: emailController.text.trim());
     Get.offAllNamed(Routes.dashboardScreen);
   }
 

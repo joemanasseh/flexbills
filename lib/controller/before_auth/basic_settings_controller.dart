@@ -14,6 +14,7 @@ class BasicSettingsController extends GetxController {
 
   @override
   void onInit() {
+    _initializeFallbackLinks();
     basicSettingsFetch();
     super.onInit();
   }
@@ -21,26 +22,38 @@ class BasicSettingsController extends GetxController {
   final _isLoading = false.obs;
   bool get isLoading => _isLoading.value;
 
-  late BasicSettingModel _basicSettingModel;
-  BasicSettingModel get basicSettingModel => _basicSettingModel;
+  BasicSettingModel? _basicSettingModel;
+  BasicSettingModel? get basicSettingModel => _basicSettingModel;
 
-  Future<BasicSettingModel> basicSettingsFetch() async {
+  void _initializeFallbackLinks() {
+    splashBGLink = "${ApiEndpoint.mainDomain}/assets/splash.png";
+    appIconLink = "${ApiEndpoint.mainDomain}/assets/logo.png";
+  }
+
+  Future<BasicSettingModel?> basicSettingsFetch() async {
     _isLoading.value = true;
     update();
 
-    await ApiServices.basicSettingApi().then((value) {
-      _basicSettingModel = value!;
+    try {
+      final value = await ApiServices.basicSettingApi();
+      if (value != null) {
+        _basicSettingModel = value;
 
-      splashBGLink =
-          "${ApiEndpoint.mainDomain}/${_basicSettingModel.data.imagePath}/${_basicSettingModel.data.splashScreen.splashScreenImage}";
-      // onboardBGLink = "${ApiEndpoint.mainDomain}/${_basicSettingModel.data.imagePath}/${_basicSettingModel.data.onboardScreen.first.image}";
-      appIconLink =
-          "${ApiEndpoint.mainDomain}/${_basicSettingModel.data.logoImagePath}/${_basicSettingModel.data.allLogo.siteLogo}";
+        splashBGLink =
+            "${ApiEndpoint.mainDomain}/${_basicSettingModel!.data.imagePath}/${_basicSettingModel!.data.splashScreen.splashScreenImage}";
+        // onboardBGLink = "${ApiEndpoint.mainDomain}/${_basicSettingModel.data.imagePath}/${_basicSettingModel.data.onboardScreen.first.image}";
+        appIconLink =
+            "${ApiEndpoint.mainDomain}/${_basicSettingModel!.data.logoImagePath}/${_basicSettingModel!.data.allLogo.siteLogo}";
 
-      update();
-    }).catchError((onError) {
-      log.e(onError);
-    });
+        update();
+      } else {
+        log.e('🐞🐞🐞 API returned null 🐞🐞🐞');
+        _initializeFallbackLinks();
+      }
+    } catch (e) {
+      log.e('🐞🐞🐞 Error fetching basic settings: $e 🐞🐞🐞');
+      _initializeFallbackLinks();
+    }
     _isLoading.value = false;
     update();
 

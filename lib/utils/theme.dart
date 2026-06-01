@@ -15,7 +15,7 @@ class Themes {
 
   bool _loadThemeFromBox() => _box.read(_key) ?? false;
 
-  ThemeMode get theme => _loadThemeFromBox() ? ThemeMode.dark : ThemeMode.light;
+  static ThemeMode get theme => (GetStorage().read('isDarkMode') ?? false) ? ThemeMode.dark : ThemeMode.light;
 
   void switchTheme() {
     Get.changeThemeMode(_loadThemeFromBox() ? ThemeMode.light : ThemeMode.dark);

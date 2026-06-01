@@ -12,3 +12,4 @@ export 'custom_style.dart';
 export 'dimensions.dart';
 export 'size.dart';
 export 'package:flutter_screenutil/flutter_screenutil.dart';
+export '../extensions/custom_extensions.dart';

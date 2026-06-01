@@ -8,7 +8,7 @@ class MyWalletController extends GetxController{
 
   final walletsController = Get.find<HomeController>();
 
-  void routeCurrentBalanceScreen(int index, UserWallet data) {
+  void routeCurrentBalanceScreen(UserWallet data) {
     Get.toNamed(Routes.currentBalanceScreen, arguments: data);
   }
 }

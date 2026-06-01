@@ -1,5 +1,4 @@
-import 'package:adescrow_app/backend/services/api_endpoint.dart';
-
+import '../../../utils/currency_flag_util.dart';
 import '../../../widgets/custom_dropdown_widget/custom_dropdown_widget.dart';
 
 class AddMoneyIndexModel {
@@ -174,50 +173,27 @@ class UserWallet extends DropdownModel{
   );
 
   @override
-  // TODO: implement code
-  String get mcode => throw UnimplementedError();
-
+  String get mcode => mCurrencyCode;
   @override
-  // TODO: implement currencyCode
-  String get currencyCode => throw UnimplementedError();
-
+  String get currencyCode => mCurrencyCode;
   @override
-  // TODO: implement currencySymbol
-  String get currencySymbol => throw UnimplementedError();
-
+  String get currencySymbol => mCurrencySymbol;
   @override
-  // TODO: implement fCharge
-  double get fCharge => throw UnimplementedError();
-
+  double get fCharge => 0.0;
   @override
-  // TODO: implement img
-  String get img => "${ApiEndpoint.mainDomain}/$imagePath/$flag";
-
+  String get img => flagUrl(mCurrencyCode);
   @override
-  // TODO: implement max
-  double get max => throw UnimplementedError();
-
+  double get max => 0.0;
   @override
-  // TODO: implement min
-  double get min => throw UnimplementedError();
-
+  double get min => 0.0;
   @override
-  // TODO: implement pCharge
-  double get pCharge => throw UnimplementedError();
-
+  double get pCharge => 0.0;
   @override
-  // TODO: implement rate
   double get rate => double.parse(mRate.toString());
-
   @override
-  // TODO: implement title
   String get title => mCurrencyCode;
-
   @override
-  // TODO: implement type
-  String get type => throw UnimplementedError();
-
+  String get type => currencyType;
   @override
-  // TODO: implement id
-  String get id => throw UnimplementedError();
+  String get id => mCurrencyCode;
 }

@@ -1,5 +1,5 @@
 name: adescrow_app
-description: Escroc App
+description: Flexbills - Bill Payments & Wallets
 
 publish_to: 'none'
 
@@ -21,6 +21,7 @@ dependencies:
   google_fonts: 6.1.0
   country_code_picker: ^3.0.0
   get_storage: ^2.1.1
+  flutter_secure_storage: ^9.2.2
   logger: ^2.0.2
   pin_code_fields: ^8.0.1
   intl: ^0.18.0

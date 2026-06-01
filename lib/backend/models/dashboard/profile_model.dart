@@ -53,52 +53,29 @@ class Country extends DropdownModel{
       );
 
   @override
-  // TODO: implement currencyCode
-  String get currencyCode => throw UnimplementedError();
-
+  String get currencyCode => '';
   @override
-  // TODO: implement currencySymbol
-  String get currencySymbol => throw UnimplementedError();
-
+  String get currencySymbol => '';
   @override
-  // TODO: implement fCharge
-  double get fCharge => throw UnimplementedError();
-
+  double get fCharge => 0.0;
   @override
-  // TODO: implement id
-  String get id => throw UnimplementedError();
-
+  String get id => mobileCode;
   @override
-  // TODO: implement img
-  String get img => throw UnimplementedError();
-
+  String get img => '';
   @override
-  // TODO: implement max
-  double get max => throw UnimplementedError();
-
+  double get max => 0.0;
   @override
-  // TODO: implement mcode
   String get mcode => mobileCode;
-
   @override
-  // TODO: implement min
-  double get min => throw UnimplementedError();
-
+  double get min => 0.0;
   @override
-  // TODO: implement pCharge
-  double get pCharge => throw UnimplementedError();
-
+  double get pCharge => 0.0;
   @override
-  // TODO: implement rate
-  double get rate => throw UnimplementedError();
-
+  double get rate => 0.0;
   @override
-  // TODO: implement title
   String get title => name;
-
   @override
-  // TODO: implement type
-  String get type => throw UnimplementedError();
+  String get type => '';
 }
 
 class User{

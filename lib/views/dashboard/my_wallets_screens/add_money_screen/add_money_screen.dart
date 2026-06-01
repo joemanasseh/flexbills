@@ -23,6 +23,7 @@ class AddMoneyScreen extends GetView<AddMoneyController> {
               backgroundColor: Colors.transparent,
               appBar: const PrimaryAppBar(
                 title: Strings.addMoney,
+                breadcrumbs: ['Home', 'Wallet', 'Add Money'],
               ),
               body: Obx(() => controller.isLoading
                   ? const CustomLoadingWidget()
@@ -90,11 +91,11 @@ class AddMoneyScreen extends GetView<AddMoneyController> {
           ),
           verticalSpace(Dimensions.marginSizeVertical * 1),
           _infoTextWidget(context,
-              name: Strings.exchangeRate, value: "1.00 ${controller.selectedCurrency.value} - ${controller.exchangeRate.value.toStringAsFixed(2)} ${controller.selectedMethodCurrencyCode.value}"),
+              name: Strings.exchangeRate, value: "1.00 ${controller.selectedCurrency.value} - ${controller.exchangeRate.value.toRateString(2)} ${controller.selectedMethodCurrencyCode.value}"),
           verticalSpace(Dimensions.marginSizeVertical * .2),
-          _infoTextWidget(context, name: Strings.charge, value: "${controller.selectedMethodFCharge.value.toStringAsFixed(2)} ${controller.selectedMethodCurrencyCode.value} + ${controller.selectedMethodPCharge.value.toStringAsFixed(2)}%"),
+          _infoTextWidget(context, name: Strings.charge, value: "${controller.selectedMethodFCharge.value.toFiatString()} ${controller.selectedMethodCurrencyCode.value} + ${controller.selectedMethodPCharge.value.toFiatString()}%"),
           verticalSpace(Dimensions.marginSizeVertical * .2),
-          _infoTextWidget(context, name: Strings.limit, value: "${controller.min.value.toStringAsFixed(controller.selectedCurrencyType.value == "FIAT" ? 2: 6)} ${controller.selectedCurrency.value} - ${controller.max.value.toStringAsFixed(controller.selectedCurrencyType.value == "FIAT" ? 2: 6)} ${controller.selectedCurrency.value}"),
+          _infoTextWidget(context, name: Strings.limit, value: "${controller.min.value.toFormattedCurrency(controller.selectedCurrencyType.value == "FIAT" ? 2 : 6)} ${controller.selectedCurrency.value} - ${controller.max.value.toFormattedCurrency(controller.selectedCurrencyType.value == "FIAT" ? 2 : 6)} ${controller.selectedCurrency.value}"),
           verticalSpace(Dimensions.marginSizeVertical * .5),
         ],
       ),
@@ -150,7 +151,7 @@ class AddMoneyScreen extends GetView<AddMoneyController> {
                 CustomSnackBar.error(Strings.enterAmount);
               }
             },
-            widget: _paymentMethodDropDownWidget(context),
+            widget: const SizedBox.shrink(),
             buttonText: Strings.addMoney,
             isLoading: controller.isSubmitLoading,
             amountController: controller.amountController)));
@@ -180,41 +181,5 @@ class AddMoneyScreen extends GetView<AddMoneyController> {
         ),
       ),
     ));
-  }
-  _paymentMethodDropDownWidget(BuildContext context) {
-    return Obx(() => SizedBox(
-          // width: Dimensions.widthSize * 20,
-          child: WalletDropDown<GatewayCurrency>(
-            items: controller.addMoneyIndexModel.data.gatewayCurrencies,
-            image: controller.selectedMethodImage.value,
-            hint: controller.selectedMethod.value,
-            onChanged: (value) {
-              controller.selectedMethodID.value = value!.id;
-              controller.selectedMethod.value = value.title;
-              controller.selectedMethodCurrencyCode.value = value.currencyCode;
-              controller.selectedMethodImage.value = value.img;
-              controller.selectedMethodType.value = value.type;
-              controller.selectedMethodAlias.value = value.alias;
-              controller.selectedMethodMax.value = value.max;
-              controller.selectedMethodMin.value = value.min;
-              controller.selectedMethodPCharge.value = value.pCharge;
-              controller.selectedMethodFCharge.value = value.fCharge;
-              controller.selectedMethodRate.value = value.rate;
-
-              controller.exchangeCalculation();
-            },
-            padding: EdgeInsets.symmetric(
-              horizontal: Dimensions.paddingSizeHorizontal * 0.1,
-            ),
-            titleTextColor: CustomColor.whiteColor,
-            dropDownColor: Theme.of(context).primaryColor,
-            borderEnable: true,
-            dropDownFieldColor: Theme.of(context).primaryColor,
-            dropDownIconColor: CustomColor.whiteColor,
-            border: Border.all(
-              color: Theme.of(context).primaryColor,
-            ),
-          ),
-        ));
   }
 }

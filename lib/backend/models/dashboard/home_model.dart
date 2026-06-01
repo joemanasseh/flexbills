@@ -11,27 +11,15 @@ class HomeModel {
 }
 
 class Data {
-  final int totalEscrow;
-  final int completedEscrow;
-  final int pendingEscrow;
-  final int disputeEscrow;
   final List<UserWallet> userWallet;
   final List<Transaction> transactions;
 
   Data({
-    required this.totalEscrow,
-    required this.completedEscrow,
-    required this.pendingEscrow,
-    required this.disputeEscrow,
     required this.userWallet,
     required this.transactions,
   });
 
   factory Data.fromJson(Map<String, dynamic> json) => Data(
-    totalEscrow: json["total_escrow"],
-    completedEscrow: json["compledted_escrow"],
-    pendingEscrow: json["pending_escrow"],
-    disputeEscrow: json["dispute_escrow"],
     userWallet: List<UserWallet>.from(json["userWallet"].map((x) => UserWallet.fromJson(x))),
     transactions: List<Transaction>.from(json["transactions"].map((x) => Transaction.fromJson(x))),
   );

@@ -65,14 +65,18 @@ class PrimaryTextInputWidget extends StatelessWidget {
           controller: controller,
           keyboardType: keyboardType,
           validator: (String? value) {
-            if (value!.isEmpty && maxLine == 1) {
+            final v = value?.trim() ?? '';
+            if (v.isEmpty && maxLine == 1) {
               return Get.find<LanguageSettingController>().isLoading
                   ? ""
                   : Get.find<LanguageSettingController>()
                       .getTranslation(Strings.pleaseFillOutTheField);
-            } else {
-              return null;
             }
+            if (keyboardType == TextInputType.emailAddress && v.isNotEmpty) {
+              final emailRegex = RegExp(r'^[\w.+\-]+@[a-zA-Z0-9\-]+\.[a-zA-Z]{2,}$');
+              if (!emailRegex.hasMatch(v)) return 'Enter a valid email address';
+            }
+            return null;
           },
           onFieldSubmitted: onChanged,
           decoration: InputDecoration(

@@ -17,46 +17,42 @@ class FASecurityController extends GetxController with TwoFaApiService {
   final _isLoading = false.obs;
   bool get isLoading => _isLoading.value;
 
-  late TwoFaInfoModel _twoFaInfoModel;
-  TwoFaInfoModel get twoFaInfoModel => _twoFaInfoModel;
+  TwoFaInfoModel? _twoFaInfoModel;
+  TwoFaInfoModel? get twoFaInfoModel => _twoFaInfoModel;
 
-  Future<TwoFaInfoModel> twoFAFetch() async {
+  Future<void> twoFAFetch() async {
     _isLoading.value = true;
     update();
-
-    await twoFaInfoAPi().then((value) {
-      _twoFaInfoModel = value!;
-      update();
-    }).catchError((onError) {
-      log.e(onError);
-    });
-
+    try {
+      final value = await twoFaInfoAPi();
+      if (value != null) _twoFaInfoModel = value;
+    } catch (e) {
+      log.e(e);
+    }
     _isLoading.value = false;
     update();
-
-    return _twoFaInfoModel;
   }
 
-  late CommonSuccessModel _successModel;
-  CommonSuccessModel get successModel => _successModel;
+  CommonSuccessModel? _successModel;
+  CommonSuccessModel? get successModel => _successModel;
 
-  Future<CommonSuccessModel> onFASubmitProcess() async {
+  Future<void> onFASubmitProcess() async {
+    if (_twoFaInfoModel == null) return;
     Get.close(1);
     _isLoading.value = true;
     update();
-
-    Map<String, dynamic> inputBody = {
-      'status': _twoFaInfoModel.data.qrStatus == 1 ? 0 : 1,
-    };
-
-    await twoFaStatusUpdateApi(body: inputBody).then((value) async {
-      _successModel = value!;
-      await twoFAFetch();
-      update();
-    }).catchError((onError) {
-      log.e(onError);
-    });
-
-    return _successModel;
+    try {
+      final Map<String, dynamic> inputBody = {
+        'status': _twoFaInfoModel!.data.qrStatus == 1 ? 0 : 1,
+      };
+      final value = await twoFaStatusUpdateApi(body: inputBody);
+      if (value != null) {
+        _successModel = value;
+        await twoFAFetch();
+      }
+    } catch (e) {
+      log.e(e);
+    }
+    update();
   }
 }

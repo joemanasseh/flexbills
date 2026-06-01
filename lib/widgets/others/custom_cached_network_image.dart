@@ -9,14 +9,16 @@ class CustomCachedNetworkImage extends StatelessWidget {
     super.key,
     required this.imageUrl,
     this.placeHolder,
+    this.errorPlaceholder,
     this.height,
     this.width,
-    this.isCircle = false, this.radius,
-    // this.placeHolder
+    this.isCircle = false,
+    this.radius,
   });
 
   final String imageUrl;
   final Widget? placeHolder;
+  final Widget? errorPlaceholder;
   final double? height;
   final double? width;
   final double? radius;
@@ -28,23 +30,31 @@ class CustomCachedNetworkImage extends StatelessWidget {
       height: height ?? double.infinity,
       width: width ?? double.infinity,
       imageUrl: imageUrl,
-      imageBuilder: (context, url) => Container(
+      imageBuilder: (context, imageProvider) => Container(
         height: height ?? double.infinity,
         width: width ?? double.infinity,
         decoration: BoxDecoration(
-            shape: isCircle ? BoxShape.circle : BoxShape.rectangle,
-            borderRadius: isCircle
-                ? null
-                : BorderRadius.circular(Dimensions.radius * (radius ?? 1.2) ),
-            image: DecorationImage(
-            image: NetworkImage(imageUrl),
-            fit: BoxFit.fill
-          )
+          shape: isCircle ? BoxShape.circle : BoxShape.rectangle,
+          borderRadius: isCircle
+              ? null
+              : BorderRadius.circular(Dimensions.radius * (radius ?? 1.2)),
+          image: DecorationImage(image: imageProvider, fit: BoxFit.fill),
         ),
       ),
-      // fit: BoxFit.fitWidth,
       placeholder: (context, url) => placeHolder ?? const CustomLoadingWidget(),
-      errorWidget: (context, url, error) => placeHolder ?? const CustomLoadingWidget(),
+      errorWidget: (context, url, error) =>
+          errorPlaceholder ??
+          placeHolder ??
+          Container(
+            color: Colors.transparent,
+            child: Center(
+              child: Icon(
+                Icons.broken_image_outlined,
+                color: Colors.grey.withOpacity(0.4),
+                size: 24,
+              ),
+            ),
+          ),
     );
   }
 }

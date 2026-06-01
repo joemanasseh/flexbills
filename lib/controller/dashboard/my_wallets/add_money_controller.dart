@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import 'package:adescrow_app/backend/services/api_endpoint.dart';
 import 'package:adescrow_app/utils/basic_screen_imports.dart';
+import 'package:adescrow_app/utils/currency_flag_util.dart';
 
 import '../../../backend/models/dashboard/home_model.dart' as home;
 
@@ -91,7 +91,7 @@ class AddMoneyController extends GetxController with AddMoneyApiService {
       // final currency = _addMoneyIndexModel.data.userWallet.first;
       selectedCurrency = data.currencyCode.obs;
       selectedCurrencyType = data.currencyType.obs;
-      selectedCurrencyImage = "${ApiEndpoint.mainDomain}/${data.imagePath}/${data.flag}".obs;
+      selectedCurrencyImage = flagUrl(data.currencyCode).obs;
       selectedCurrencyRate = data.rate.obs;
 
       final gateway = _addMoneyIndexModel.data.gatewayCurrencies.first;
@@ -169,7 +169,6 @@ class AddMoneyController extends GetxController with AddMoneyApiService {
                         url.toString().contains('razor-pay/callback') ||
                         url.toString().contains('api-razor/callback') ||
                         url.toString().contains('razor-pay-api/callback') ||
-                        url.toString().contains('escrow-payment-api/callback?razorpay_order_id') ||
                         url.toString().contains('payment/confirmed') ||
                         url.toString().contains('payment/success'
                         )) {

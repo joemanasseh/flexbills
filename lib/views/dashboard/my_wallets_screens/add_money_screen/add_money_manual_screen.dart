@@ -19,6 +19,7 @@ class AddMoneyManualScreen extends StatelessWidget {
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           appBar: PrimaryAppBar(
             title: controller.information.gatewayCurrencyName,
+            breadcrumbs: const ['Home', 'Wallet', 'Add Money', 'Manual'],
           ),
           body: _bottomBodyWidget(context),
         ),

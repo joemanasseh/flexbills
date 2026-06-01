@@ -19,6 +19,7 @@ class MoneyOutManualScreen extends StatelessWidget {
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           appBar: PrimaryAppBar(
             title: controller.information.gatewayCurrencyName,
+            breadcrumbs: const ['Home', 'Wallet', 'Send Money', 'Manual'],
           ),
           body: _bottomBodyWidget(context),
         ),

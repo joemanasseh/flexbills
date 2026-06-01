@@ -50,32 +50,12 @@ class ApiEndpoint {
   static String moneyExchangeURL = '/user/money-exchange'.addBaseURl();
   static String moneyExchangeSubmitURL =
       '/user/money-exchange/submit'.addBaseURl();
+  static String exchangeRateURL = '/user/exchange/live-rate'.addBaseURl();
 
-  static String escrowIndexURL = '/user/my-escrow/index'.addBaseURl();
-  static String escrowCreateURL = '/user/my-escrow/create'.addBaseURl();
-  static String escrowUserCheckURL =
-      '/user/my-escrow/user-check?userCheck='.addBaseURl();
-  static String escrowSubmitURL = '/user/my-escrow/submit'.addBaseURl();
-  static String escrowConfirmURL =
-      '/user/my-escrow/confirm-escrow'.addBaseURl();
-  static String escrowManualSubmitURL =
-      '/user/my-escrow/manual/payment/confirmed'.addBaseURl();
+  // Bills (Flutterwave via backend proxy)
+  static String billsBillersURL = '/bills/NG/billers'.addBaseURl();
+  static String billsValidateURL = '/user/bills/validate'.addBaseURl();
+  static String billsPayURL = '/user/bills/pay'.addBaseURl();
+  static String billsStatusURL = '/user/bills/status'.addBaseURl();
 
-  static String buyerPaymentIndexURL =
-      '/user/api-escrow-action/payment/approval-pending/'.addBaseURl();
-  static String buyerPaymentSubmitURL =
-      '/user/api-escrow-action/escrow/payment/approval-submit/'.addBaseURl();
-  static String buyerPaymentManualConfirmURL =
-      '/user/api-escrow-action/approval-pending/manual/confirm'.addBaseURl();
-
-  static String conversationURL =
-      '/user/api-escrow-action/conversation'.addBaseURl();
-  static String messageSendURL =
-      '/user/api-escrow-action/message/send'.addBaseURl();
-  static String disputeURL =
-      '/user/api-escrow-action/dispute-payment'.addBaseURl();
-  static String releasePaymentURL =
-      '/user/api-escrow-action/release-payment'.addBaseURl();
-  static String requestPaymentURL =
-      '/user/api-escrow-action/release-request'.addBaseURl();
 }

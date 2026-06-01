@@ -8,8 +8,8 @@ import '../../../backend/backend_utils/logger.dart';
 import '../../../backend/models/common/common_success_model.dart';
 import '../../../backend/models/money_out/money_out_index_model.dart';
 import '../../../backend/models/money_out/money_out_manual_model.dart';
-import '../../../backend/services/api_endpoint.dart';
 import '../../../backend/services/money_out_api_service.dart';
+import '../../../utils/currency_flag_util.dart';
 import '../../../routes/routes.dart';
 import '../../../views/confirm_screen.dart';
 import '../../../widgets/custom_dropdown_widget/custom_dropdown_widget.dart';
@@ -43,6 +43,7 @@ class MoneyOutController extends GetxController with MoneyOutApiService{
   RxDouble exchangeRate = 0.0.obs;
   RxDouble min = 0.0.obs;
   RxDouble max = 0.0.obs;
+  final amountObs = ''.obs;
 
   exchangeCalculation(){
     exchangeRate.value = (1/selectedCurrencyRate.value) * selectedMethodRate.value;
@@ -81,17 +82,18 @@ class MoneyOutController extends GetxController with MoneyOutApiService{
   late MoneyOutIndexModel _moneyOutIndexModel;
   MoneyOutIndexModel get moneyOutIndexModel => _moneyOutIndexModel;
 
-  Future<MoneyOutIndexModel> moneyOutInfoAPI() async {
+  Future<void> moneyOutInfoAPI() async {
     _isLoading.value = true;
     update();
 
-    await moneyOutIndexAPi().then((value) {
-      _moneyOutIndexModel = value!;
+    try {
+      final value = await moneyOutIndexAPi();
+      if (value == null) return;
+      _moneyOutIndexModel = value;
 
-      // final currency = _moneyOutIndexModel.data.userWallet.first;
       selectedCurrency = data.currencyCode.toString().obs;
       selectedCurrencyType = data.currencyType.obs;
-      selectedCurrencyImage = "${ApiEndpoint.mainDomain}/${data.imagePath}/${data.flag}".obs;
+      selectedCurrencyImage = flagUrl(data.currencyCode).obs;
       selectedCurrencyRate = data.rate.obs;
 
       final gateway = _moneyOutIndexModel.data.gatewayCurrencies.first;
@@ -100,7 +102,7 @@ class MoneyOutController extends GetxController with MoneyOutApiService{
       selectedMethodImage = gateway.image.toString().obs;
       selectedMethodType = gateway.mType.obs;
       selectedMethodAlias = gateway.alias.obs;
-      selectedMethodCurrencyCode  = gateway.mCurrencyCode.obs;
+      selectedMethodCurrencyCode = gateway.mCurrencyCode.obs;
       selectedMethodMax = gateway.maxLimit.obs;
       selectedMethodMin = gateway.minLimit.obs;
       selectedMethodPCharge = gateway.percentCharge.obs;
@@ -108,16 +110,13 @@ class MoneyOutController extends GetxController with MoneyOutApiService{
       selectedMethodRate = gateway.mRate.obs;
 
       exchangeCalculation();
-
       update();
-    }).catchError((onError) {
-      log.e(onError);
-    });
-
-    _isLoading.value = false;
-    update();
-
-    return _moneyOutIndexModel;
+    } catch (e) {
+      log.e(e);
+    } finally {
+      _isLoading.value = false;
+      update();
+    }
   }
 
 
@@ -206,28 +205,11 @@ class MoneyOutController extends GetxController with MoneyOutApiService{
   late String webUrl;
   late PaymentInformations information;
 
-  void moneyOutBTNClicked(BuildContext context) async{
+  void moneyOutBTNClicked(BuildContext context) async {
     if (amountController.text.isNotEmpty) {
-      if(selectedMethodType.value == "AUTOMATIC"){
-        // if(selectedMethodID.value == "1"){
-        //   await onPaypalProcess().then((value) {
-        //     webUrl = value.data.url[1].href;
-        //     information = value.data.paymentInformations;
-        //     Get.toNamed(Routes.addMoneyScreenPreview);
-        //   });
-        // }
-        // else{
-        //   await onAutomaticProcess().then((value) {
-        //     webUrl = value.data.url;
-        //     information = value.data.paymentInformations;
-        //     Get.toNamed(Routes.addMoneyScreenPreview);
-        //   });
-        // }
-      }
-      else if(selectedMethodType.value == "MANUAL"){
+      if (selectedMethodType.value == "MANUAL") {
         await onManualProcess();
       }
-
     }
   }
 
@@ -239,7 +221,7 @@ class MoneyOutController extends GetxController with MoneyOutApiService{
   late MoneyOutManualModel _moneyOutManualModel;
   MoneyOutManualModel get moneyOutManualModel => _moneyOutManualModel;
 
-  Future<MoneyOutManualModel> onManualProcess() async {
+  Future<void> onManualProcess() async {
     inputFields.clear();
     inputFileFields.clear();
     listImagePath.clear();
@@ -251,29 +233,25 @@ class MoneyOutController extends GetxController with MoneyOutApiService{
     _isSubmitLoading.value = true;
     update();
 
-    Map<String, dynamic> inputBody = {
-      'amount': amountController.text,
-      'sender_currency': selectedCurrency.value,
-      'gateway_currency': selectedMethodAlias.value,
-    };
+    try {
+      final value = await moneyOutSubmitManualApi(body: {
+        'amount': amountController.text,
+        'sender_currency': selectedCurrency.value,
+        'gateway_currency': selectedMethodAlias.value,
+      });
 
-    await moneyOutSubmitManualApi(body: inputBody).then((value) async {
-      _moneyOutManualModel = value!;
+      if (value == null) return;
 
-
-      final data = _moneyOutManualModel.data.inputFields;
-      _getDynamicInputField(data);
+      _moneyOutManualModel = value;
+      _getDynamicInputField(_moneyOutManualModel.data.inputFields);
       information = value.data.paymentInformations;
       Get.toNamed(Routes.moneyOutScreenPreview);
-
+    } catch (e) {
+      log.e(e);
+    } finally {
       _isSubmitLoading.value = false;
       update();
-    }).catchError((onError) {
-      log.e(onError);
-    });
-    _isSubmitLoading.value = false;
-    update();
-    return _moneyOutManualModel;
+    }
   }
 
   List<TextEditingController> inputFieldControllers = [];

@@ -18,35 +18,36 @@ class FASecurityScreen extends GetView<FASecurityController> {
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           appBar: const PrimaryAppBar(
             title: Strings.faSecurity,
+            breadcrumbs: ['Home', 'Profile', '2FA Security'],
           ),
-          body: Obx(() => controller.isLoading
-              ? const CustomLoadingWidget()
-              : Column(
-                  children: [
-                    verticalSpace(Dimensions.marginSizeVertical),
-                    Container(
-                      // width: MediaQuery.of(context).size.width * .8,
-                      height: MediaQuery.of(context).size.height * .32,
-                      width: MediaQuery.sizeOf(context).width * .8,
-                      margin: EdgeInsets.symmetric(
-                          horizontal: Dimensions.paddingSizeHorizontal * 2.4,
-                          vertical: Dimensions.paddingSizeVertical * .5),
-                      // padding: EdgeInsets.symmetric(
-                      // horizontal: Dimensions.paddingSizeHorizontal,
-                      // vertical: Dimensions.paddingSizeVertical,
-                      decoration: BoxDecoration(
-                        color: CustomColor.whiteColor,
-                        borderRadius:
-                            BorderRadius.circular(Dimensions.radius * 1.5),
-                      ),
-                      child: CustomCachedNetworkImage(
-                        imageUrl: controller.twoFaInfoModel.data.qrCode,
-                      ),
-                    ),
-                    verticalSpace(Dimensions.marginSizeVertical),
-                    _bottomBodyWidget(context),
-                  ],
-                )),
+          body: Obx(() {
+            if (controller.isLoading) return const CustomLoadingWidget();
+            if (controller.twoFaInfoModel == null) {
+              return const Center(child: CustomLoadingWidget());
+            }
+            return Column(
+              children: [
+                verticalSpace(Dimensions.marginSizeVertical),
+                Container(
+                  height: MediaQuery.of(context).size.height * .32,
+                  width: MediaQuery.sizeOf(context).width * .8,
+                  margin: EdgeInsets.symmetric(
+                      horizontal: Dimensions.paddingSizeHorizontal * 2.4,
+                      vertical: Dimensions.paddingSizeVertical * .5),
+                  decoration: BoxDecoration(
+                    color: CustomColor.whiteColor,
+                    borderRadius:
+                        BorderRadius.circular(Dimensions.radius * 1.5),
+                  ),
+                  child: CustomCachedNetworkImage(
+                    imageUrl: controller.twoFaInfoModel!.data.qrCode,
+                  ),
+                ),
+                verticalSpace(Dimensions.marginSizeVertical),
+                _bottomBodyWidget(context),
+              ],
+            );
+          }),
         ),
       ),
     );
@@ -70,10 +71,10 @@ class FASecurityScreen extends GetView<FASecurityController> {
               width: MediaQuery.of(context).size.width,
               child: TitleSubTitleWidget(
                 fromStart: true,
-                title: controller.twoFaInfoModel.data.qrStatus == 1
+                title: controller.twoFaInfoModel!.data.qrStatus == 1
                     ? Strings.disableTwoFa
                     : Strings.enableTwoFa,
-                subTitle: controller.twoFaInfoModel.data.alert,
+                subTitle: controller.twoFaInfoModel!.data.alert,
               ),
             ),
 
@@ -82,15 +83,15 @@ class FASecurityScreen extends GetView<FASecurityController> {
               padding: EdgeInsets.symmetric(
                   horizontal: Dimensions.paddingSizeHorizontal * .5),
               child: PrimaryButton(
-                  title: controller.twoFaInfoModel.data.qrStatus == 1
+                  title: controller.twoFaInfoModel!.data.qrStatus == 1
                       ? Strings.disable
                       : Strings.enable,
                   onPressed: () {
                     DialogHelper.showAlertDialog(context,
-                        title: controller.twoFaInfoModel.data.qrStatus == 1
+                        title: controller.twoFaInfoModel!.data.qrStatus == 1
                             ? Strings.disable
                             : Strings.enable,
-                        content: controller.twoFaInfoModel.data.qrStatus == 1
+                        content: controller.twoFaInfoModel!.data.qrStatus == 1
                             ? Strings.faDisableAlert
                             : Strings.faEnableAlert,
                         onTap: controller.onFASubmitProcess);
